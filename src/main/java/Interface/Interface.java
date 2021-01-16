@@ -6,7 +6,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class Interface {
 
@@ -267,9 +266,19 @@ public class Interface {
         btnValiderCourbes.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                refreshCourbesCapteurs();
+                displayCourbesCapteurs();
             }
         });
+        ActionListener checkListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshListeCapteurs();
+            }
+        };
+        checkEau2.addActionListener(checkListener);
+        checkTemperature2.addActionListener(checkListener);
+        checkElectricite2.addActionListener(checkListener);
+        checkAirComprime2.addActionListener(checkListener);
 
         panelFluides2.add(checkEau2);
         panelFluides2.add(checkElectricite2);
@@ -406,13 +415,24 @@ public class Interface {
                 return strings[i];
             }
         });
-
-
     }
 
-    private void refreshCourbesCapteurs() {
+    private void refreshListeCapteurs() {
+        String[] capteurs = connexion.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
+        listeCapteurs2.setModel(new AbstractListModel<>() {
+            String[] strings = capteurs;
+            public int getSize() {
+                return strings.length;
+            }
+            public String getElementAt(int i) {
+                return strings[i];
+            }
+        });
+    }
+
+    private void displayCourbesCapteurs() {
         //List<String> capteurs = connexion.getCapteurs(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected(), textDateDebut.getText(), textDateFin.getText());
-        listeCapteurs2.setSelectionModel(new MySelectionModel(listeCapteurs2, 3));
+        listeCapteurs2.setSelectionModel(new Interface.Interface.SelectionModelMax(listeCapteurs2, 3));
     }
 
     private void editSeuils() {
@@ -430,12 +450,12 @@ public class Interface {
         frame.setVisible(true);
     }
 
-    private static class MySelectionModel extends DefaultListSelectionModel
+    private static class SelectionModelMax extends DefaultListSelectionModel
     {
         private JList list;
         private int maxCount;
 
-        private MySelectionModel(JList list,int maxCount)
+        private SelectionModelMax(JList list, int maxCount)
         {
             this.list = list;
 
