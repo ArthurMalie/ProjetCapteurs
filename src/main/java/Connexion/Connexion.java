@@ -155,6 +155,30 @@ public class Connexion {
 
     public String[] getAllCapteursFiltres(boolean airComprime, boolean eau, boolean electricite, boolean temperature){
         List<String> list = new ArrayList<>();
+        String fluides = "";
+        if(airComprime)
+            fluides += "AIR_COMPRIME,";
+        if(eau)
+            fluides += "EAU,";
+        if(electricite)
+            fluides += "ELECTRICITE,";
+        if(temperature)
+            fluides += "TEMPERATURE,";
+        fluides= fluides.substring(0,fluides.length()-1);
+
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR WHERE TYPEF IN (" + fluides + ");");
+        try {
+            while (resultSet.next()) {
+                    list.add("Capteur " + resultSet.getInt("IDC"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray((new String[list.size()]));
+    }
+
+    public String[] getAllCapteursFiltresOnglet1(boolean airComprime, boolean eau, boolean electricite, boolean temperature, String[] batiments){
+        List<String> list = new ArrayList<>();
         ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR");
         try {
             while (resultSet.next()) {
@@ -170,18 +194,14 @@ public class Connexion {
                 if (temperature && resultSet.getString("TYPEF").equals("TEMPERATURE")) {
                     list.add("Capteur " + resultSet.getInt("IDC"));
                 }
+
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return list.toArray((new String[list.size()]));
-    }
-
-    public String[] getAllCapteursFiltres(String filtres){
-        List<String> list = new ArrayList<>();
 
 
-        return list.toArray((new String[list.size()]));
     }
 
 
