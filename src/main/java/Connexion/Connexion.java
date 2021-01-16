@@ -155,25 +155,22 @@ public class Connexion {
 
     public String[] getAllCapteursFiltres(boolean airComprime, boolean eau, boolean electricite, boolean temperature){
         List<String> list = new ArrayList<>();
-        ResultSet resultSet = null;
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR");
         try {
-            while (resultSet.next())
-                if (airComprime) {
-                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=AIR_COMPRIME");
+            while (resultSet.next()) {
+                if (airComprime && resultSet.getString("TYPEF").equals("AIR_COMPRIME")) {
                     list.add("Capteur " + resultSet.getInt("IDC"));
                 }
-                if (eau){
-                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=EAU");
+                if (eau && resultSet.getString("TYPEF").equals("EAU")) {
                     list.add("Capteur " + resultSet.getInt("IDC"));
                 }
-                if (electricite){
-                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=ELECTRICITE");
+                if (electricite && resultSet.getString("TYPEF").equals("ELECTRICITE")) {
                     list.add("Capteur " + resultSet.getInt("IDC"));
                 }
-                if (temperature){
-                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=TEMPERATURE");
+                if (temperature && resultSet.getString("TYPEF").equals("TEMPERATURE")) {
                     list.add("Capteur " + resultSet.getInt("IDC"));
                 }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

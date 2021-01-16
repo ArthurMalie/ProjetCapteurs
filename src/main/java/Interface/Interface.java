@@ -76,7 +76,7 @@ public class Interface {
         JPanel panelPort = new JPanel(new GridLayout(5, 1));
         JLabel labelConnexion = new JLabel("Connexion à l'interface de visualisation NeoCampus");
         JLabel labelPort = new JLabel("Veuillez renseigner le port sur lequel vous souhaitez vous connecter :");
-        textPort = new JTextField("8080");
+        textPort = new JTextField("3306");
         btnAnnulerPort = new JButton("Quitter");
         btnValiderPort = new JButton("Valider");
 
@@ -418,6 +418,8 @@ public class Interface {
     }
 
     private void refreshListeCapteurs() {
+
+        System.out.println("yolo" + checkAirComprime2.isSelected() + checkEau2.isSelected() + checkElectricite2.isSelected() + checkTemperature2.isSelected());
         String[] capteurs = connexion.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
         listeCapteurs2.setModel(new AbstractListModel<>() {
             String[] strings = capteurs;
@@ -432,7 +434,7 @@ public class Interface {
 
     private void displayCourbesCapteurs() {
         //List<String> capteurs = connexion.getCapteurs(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected(), textDateDebut.getText(), textDateFin.getText());
-        listeCapteurs2.setSelectionModel(new Interface.Interface.SelectionModelMax(listeCapteurs2, 3));
+        listeCapteurs2.setSelectionModel(new Interface.SelectionModelMax(listeCapteurs2, 3));
     }
 
     private void editSeuils() {
