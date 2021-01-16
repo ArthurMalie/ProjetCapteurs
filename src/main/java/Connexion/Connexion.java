@@ -214,9 +214,9 @@ public class Connexion {
 
     }
 
-    public Capteur[] getAllBatimentsFluide(boolean airComprime, boolean eau, boolean electricite, boolean temperature) {
+    public String[] getBatimentsFluides(boolean airComprime, boolean eau, boolean electricite, boolean temperature) {
 
-        List<Capteur> list = new ArrayList<>();
+        List<String> list = new ArrayList<>();
         String fluides = "";
         if (airComprime)
             fluides += "'AIR_COMPRIME',";
@@ -230,16 +230,16 @@ public class Connexion {
             fluides = fluides.substring(0, fluides.length() - 1);
 
 
-        ResultSet resultSet = executeQuery("SELECT nomB.lieu from lieu where idl in (select capteur.idL from capteur where capteur.typeF in " + fluides + ")) ;");
+        ResultSet resultSet = executeQuery("SELECT nomB from lieu where idl in (select idL from capteur where typeF in (" + fluides + ")) ;");
         try {
             while (resultSet.next()) {
 
-                list.add(Capteur.create(resultSet));
+                list.add(resultSet.getString("nomb"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return list.toArray((new Capteur[list.size()]));
+        return list.toArray((new String[list.size()]));
 
     }
 

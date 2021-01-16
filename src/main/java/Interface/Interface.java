@@ -170,13 +170,13 @@ public class Interface {
         btnFiltrer.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                refreshBatiments();
+                refreshTableauCapteurs();
             }
         });
         ActionListener checkListener1 = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                refreshTableauCapteurs();
+                refreshBatiments();
             }
         };
         checkEau1.addActionListener(checkListener1);
@@ -389,7 +389,7 @@ public class Interface {
     }
 
     private void refreshBatiments() {
-        String[] batiments = connexion.getAllBatiments();
+        String[] batiments = connexion.getBatimentsFluides(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected());
         listeBatiments.setModel(new AbstractListModel<>() {
             String[] strings = batiments;
 
@@ -460,7 +460,7 @@ public class Interface {
             System.err.println("Could not connect to database");
             System.exit(0);
         }
-        refreshBatiments();
+        //refreshBatiments();
         //refreshTableauCapteurs();
         frame.setVisible(true);
     }
