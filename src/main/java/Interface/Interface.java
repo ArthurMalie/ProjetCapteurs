@@ -4,6 +4,10 @@ import Connexion.Connexion;
 import Mapping.Capteur;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,6 +52,7 @@ public class Interface {
     private JTextField textSeuilMax;
 
     private JTree treeCapteurs;
+    private JScrollPane scrollPanelTree;
 
     public Interface() {
         frame = new JFrame("Gestion des capteurs");
@@ -280,12 +285,11 @@ public class Interface {
         JPanel panelSeuilsDefaut = new JPanel(new BorderLayout());
         JScrollPane scrollPanelInfosCapteur = new JScrollPane();
         JScrollPane scrollPanelSeuilsDefaut = new JScrollPane();
-        JScrollPane scrollPanelTree = new JScrollPane();
+        scrollPanelTree = new JScrollPane();
 
         tableauInfosCapteur = new JTable();
         tableauSeuilsDefaut = new JTable();
         btnModifierSeuils = new JButton("Modifier les seuils");
-        treeCapteurs = new JTree();
 
         panelSeuilsDefaut.setBorder(BorderFactory.createTitledBorder("Seuils par defaut"));
         panelInfosCapteur.setBorder(BorderFactory.createTitledBorder("Informations du capteur"));
@@ -330,7 +334,12 @@ public class Interface {
         btnModifierSeuils.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dialogSeuils.setVisible(true);
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode)treeCapteurs.getLastSelectedPathComponent();
+                if (treeCapteurs.getSelectionCount() > 0 && node != null && node.isLeaf()) {
+                    dialogSeuils.setVisible(true);
+                    textSeuilMin.setText("");
+                    textSeuilMax.setText("");
+                }
             }
         });
         btnValiderSeuils.addActionListener(new ActionListener() {
@@ -389,6 +398,8 @@ public class Interface {
         checkAirComprime2.setSelected(true);
         refreshListeCapteurs();
 
+        generateTree();
+
         frame.setVisible(true);
     }
 
@@ -437,7 +448,7 @@ public class Interface {
 
             tableauCapteurs.setModel(new javax.swing.table.DefaultTableModel(
                     modele, new String[]{"Nom", "Type Fluide", "Batiment", "Etage", "Lieu", "Valeur"}
-            ){
+            ) {
                 public boolean isCellEditable(int rowIndex, int columnIndex) {
                     return false;
                 }
@@ -484,7 +495,89 @@ public class Interface {
 
     }
 
+    private void displayInfosCapteur(Capteur capteur) {
+        tableauInfosCapteur.setModel(new javax.swing.table.DefaultTableModel(
+                new Object[][]{
+                        {"Batiment", capteur.getLieu().getBatiment()},
+                        {"Etage", capteur.getLieu().getEtage()},
+                        {"Type de fluide", capteur.getFluide().getType_fluide()},
+                        {"Seuil minimum", capteur.getSeuilMin()},
+                        {"Seuil maximum", capteur.getSeuilMax()}
+                },
+                new String[]{"Informations", "Valeurs"}
+        ) {
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return false;
+            }
+        });
+
+    }
+
     private void editSeuils() {
+        if(treeCapteurs.getSelectionCount() == 1 && !textSeuilMax.getText().equals("") && !textSeuilMin.getText().equals("")) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)
+                    treeCapteurs.getLastSelectedPathComponent();
+
+            if (node == null)
+                return;
+
+            Object selected = node.getUserObject();
+            if (node.isLeaf()) {
+                String idCapteur = String.valueOf(selected);
+                idCapteur = idCapteur.substring(idCapteur.length() - 1);
+                connexion.updateSeuils(idCapteur, textSeuilMin.getText(), textSeuilMax.getText());
+                displayInfosCapteur(connexion.getCapteurById(idCapteur));
+            }
+        }
+        dialogSeuils.setVisible(false);
+    }
+
+    private void generateTree() {
+
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Batiments");
+
+        DefaultMutableTreeNode batiment = null;
+        DefaultMutableTreeNode etage = null;
+        DefaultMutableTreeNode capteur = null;
+
+        String[] batiments = connexion.getAllBatiments();
+        Integer[] etages;
+        Capteur[] capteurs;
+
+        for (String bat : batiments) {
+            batiment = new DefaultMutableTreeNode(bat);
+            root.add(batiment);
+            etages = connexion.getEtagesBatiment(bat);
+            for (int floor : etages) {
+                etage = new DefaultMutableTreeNode("Etage " + floor);
+                batiment.add(etage);
+                capteurs = connexion.getCapteurEtageBatiment(floor, bat);
+                for (Capteur cpt : capteurs) {
+                    capteur = new DefaultMutableTreeNode("Capteur " + cpt.getId());
+                    etage.add(capteur);
+                }
+            }
+        }
+        treeCapteurs = new JTree(root);
+        scrollPanelTree.setViewportView(treeCapteurs);
+        treeCapteurs.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        treeCapteurs.addTreeSelectionListener(new TreeSelectionListener() {
+            @Override
+            public void valueChanged(TreeSelectionEvent e) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode)
+                        treeCapteurs.getLastSelectedPathComponent();
+
+                if (node == null)
+                    return;
+
+                Object selected = node.getUserObject();
+                if (node.isLeaf()) {
+                    String idCapteur = String.valueOf(selected);
+                    idCapteur = idCapteur.substring(idCapteur.length() - 1);
+                    displayInfosCapteur(connexion.getCapteurById(idCapteur));
+                }
+            }
+        });
     }
 
     private static class SelectionModelMax extends DefaultListSelectionModel {

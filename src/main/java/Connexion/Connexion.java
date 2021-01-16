@@ -5,6 +5,7 @@ import Mapping.Capteur;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Connexion {
 
@@ -32,21 +33,6 @@ public class Connexion {
     public boolean connect() {
 
         System.out.println("-------- MySQL JDBC Connection Testing ------");
-
-        /*try {
-
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
-
-        } catch (Exception e) {
-
-            this.connected = false;
-            System.err.println("Could not find the MySQL JDBC Driver");
-            e.printStackTrace();
-            return false;
-
-        }
-*/
-        System.out.println("MySQL JDBC Driver Registered!");
 
         try {
 
@@ -166,7 +152,7 @@ public class Connexion {
             fluides += "'ELECTRICITE',";
         if (temperature)
             fluides += "'TEMPERATURE',";
-        if(fluides.length() > 0)
+        if (fluides.length() > 0)
             fluides = fluides.substring(0, fluides.length() - 1);
 
         ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR WHERE TYPEF IN (" + fluides + ");");
@@ -192,13 +178,13 @@ public class Connexion {
             fluides += "'ELECTRICITE',";
         if (temperature)
             fluides += "'TEMPERATURE',";
-        if(fluides.length() > 0)
+        if (fluides.length() > 0)
             fluides = fluides.substring(0, fluides.length() - 1);
 
         String batimentsIn = "";
         for (String bat : batiments)
             batimentsIn += "'" + bat + "',";
-        if(batimentsIn.length() > 0)
+        if (batimentsIn.length() > 0)
             batimentsIn = batimentsIn.substring(0, batimentsIn.length() - 1);
 
         ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,LIEU,FLUIDE WHERE CAPTEUR.IDL = LIEU.IDL AND CAPTEUR.TYPEF = FLUIDE.TYPEF AND CAPTEUR.TYPEF IN (" + fluides + ") AND CAPTEUR.IDL IN (SELECT IDL FROM LIEU WHERE NOMB IN (" + batimentsIn + "));");
@@ -226,7 +212,7 @@ public class Connexion {
             fluides += "'ELECTRICITE',";
         if (temperature)
             fluides += "'TEMPERATURE',";
-        if(fluides.length() > 0)
+        if (fluides.length() > 0)
             fluides = fluides.substring(0, fluides.length() - 1);
 
 
@@ -247,21 +233,64 @@ public class Connexion {
 
         List<Capteur> list = new ArrayList<>();
 
-        ResultSet resultSet = executeQuery("SELECT * from capteur;");
+        ResultSet resultSet = executeQuery("SELECT * from capteur,lieu,fluide where capteur.idl = lieu.idl and capteur.typef = fluide.typef;");
         try {
             while (resultSet.next()) {
                 list.add(Capteur.create(resultSet));
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return list.toArray((new Capteur[list.size()]));
 
     }
 
+    public Integer[] getEtagesBatiment(String batiment) {
+        List<Integer> list = new ArrayList<>();
 
+        ResultSet resultSet = executeQuery("SELECT etage FROM lieu WHERE nomB = '" + batiment + "'");
+        try {
+            while (resultSet.next()) {
+                list.add(resultSet.getInt("etage"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray(new Integer[0]);
+    }
 
+    public Capteur[] getCapteurEtageBatiment(int etage, String batiment) {
+        List<Capteur> list = new ArrayList<>();
 
+        ResultSet resultSet = executeQuery("SELECT * from capteur,lieu,fluide where capteur.idl = lieu.idl and capteur.typef = fluide.typef and lieu.nomb = '" + batiment + "' and lieu.etage = " + etage + ";");
+        try {
+            while (resultSet.next()) {
+                list.add(Capteur.create(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray((new Capteur[list.size()]));
+
+    }
+
+    public Capteur getCapteurById(String id) {
+        Capteur capteur = null;
+
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,LIEU,FLUIDE WHERE CAPTEUR.IDL = LIEU.IDL AND CAPTEUR.TYPEF = FLUIDE.TYPEF AND IDC = " + id);
+
+        try {
+            if(resultSet.next()) {
+                capteur = Capteur.create(resultSet);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return capteur;
+    }
+
+    public int updateSeuils(String id, String seuilMin, String seuilMax) {
+        return executeUpdate("UPDATE CAPTEUR SET SEUILMIN = " + seuilMin + ", SEUILMAX = " + seuilMax + " WHERE IDC = " + id);
+    }
 
 }
