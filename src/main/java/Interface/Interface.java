@@ -396,9 +396,9 @@ public class Interface {
     }
 
     private void refreshBatiments() {
-        List<String> batiments = connexion.getBatiments();
+        String[] batiments = connexion.getAllBatiments();
         listeBatiments.setModel(new AbstractListModel<>() {
-            String[] strings = batiments.toArray(new String[batiments.size()]);
+            String[] strings = batiments;
             public int getSize() {
                 return strings.length;
             }

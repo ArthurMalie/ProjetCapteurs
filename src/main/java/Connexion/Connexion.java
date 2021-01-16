@@ -131,17 +131,16 @@ public class Connexion {
     ____________________________
     */
 
-    public List<String> getBatiments() {
+    public String[] getAllBatiments () {
         List<String> list = new ArrayList<>();
         ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
-
         try {
             while (resultSet.next())
                 list.add(resultSet.getString("NOMB"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return list;
+        return list.toArray((new String[list.size()]));
     }
 
 }

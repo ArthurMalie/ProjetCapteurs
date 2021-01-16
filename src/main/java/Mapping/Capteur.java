@@ -33,20 +33,19 @@ public class Capteur {
     public static Capteur create ( ResultSet resultSet ) {
         try {
 
-            int id = resultSet.getInt("id");
+            int idC = resultSet.getInt("idC");
             float valeur = resultSet.getFloat("valeur");
             float seuilMin = resultSet.getFloat("seuilMin");
             float seuilMax = resultSet.getFloat("seuilMax");
             boolean connecte = resultSet.getBoolean("connecte");
 
-            int idS = resultSet.getInt("id");
+            int idL = resultSet.getInt("idL");
             String nom = resultSet.getString("nom");
             String batiment = resultSet.getString("batiment");
             int etage = resultSet.getInt("etage");
 
             Lieu lieu;
-            lieu = new Lieu(idS, nom, batiment, etage);
-
+            lieu = new Lieu(idL, nom, batiment, etage);
 
             String unite = resultSet.getString("unite");
             float seuilDefautMin = resultSet.getFloat("seuilDefautMin");
@@ -56,9 +55,8 @@ public class Capteur {
             Fluide fluide;
             fluide = new Fluide(unite, seuilDefautMin, seuilDefautMax, type_fluide);
 
-
             Capteur capteur;
-            capteur = new Capteur(id, valeur, seuilMin, seuilMax, connecte, lieu, fluide);
+            capteur = new Capteur(idC, valeur, seuilMin, seuilMax, connecte, lieu, fluide);
             return capteur;
 
         } catch (SQLException throwables) {
