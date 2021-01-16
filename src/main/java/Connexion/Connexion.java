@@ -153,5 +153,39 @@ public class Connexion {
         return list.toArray((new String[list.size()]));
     }
 
+    public String[] getAllCapteursFiltres(boolean airComprime, boolean eau, boolean electricite, boolean temperature){
+        List<String> list = new ArrayList<>();
+        ResultSet resultSet = null;
+        try {
+            while (resultSet.next())
+                if (airComprime) {
+                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=AIR_COMPRIME");
+                    list.add("Capteur " + resultSet.getInt("IDC"));
+                }
+                if (eau){
+                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=EAU");
+                    list.add("Capteur " + resultSet.getInt("IDC"));
+                }
+                if (electricite){
+                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=ELECTRICITE");
+                    list.add("Capteur " + resultSet.getInt("IDC"));
+                }
+                if (temperature){
+                    resultSet = executeQuery("SELECT DISTINCT IDC FROM CAPTEUR WHERE TYPEF=TEMPERATURE");
+                    list.add("Capteur " + resultSet.getInt("IDC"));
+                }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray((new String[list.size()]));
+    }
+
+    public String[] getAllCapteursFiltres(String filtres){
+        List<String> list = new ArrayList<>();
+
+
+        return list.toArray((new String[list.size()]));
+    }
+
 
 }
