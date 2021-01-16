@@ -1,6 +1,7 @@
 package Interface;
 
 import Connexion.Connexion;
+import Mapping.Capteur;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +37,7 @@ public class Interface {
     private JList<String> listeBatiments;
     private JList<String> listeCapteurs2;
 
-    private JTable listeCapteurs1;
+    private JTable tableauCapteurs;
     private JTable tableauInfosCapteur;
     private JTable tableauSeuilsDefaut;
 
@@ -152,7 +153,7 @@ public class Interface {
         JPanel panelFluides1 = new JPanel(new GridLayout(4, 0));
         JScrollPane scrollPanelListeCapteurs1 = new JScrollPane();
         JScrollPane scrollPanelBatiments = new JScrollPane();
-        listeCapteurs1 = new JTable();
+        tableauCapteurs = new JTable();
         listeBatiments = new JList<>();
         checkEau1 = new JCheckBox("Eau");
         checkElectricite1 = new JCheckBox("Electricite");
@@ -163,35 +164,7 @@ public class Interface {
         panelFiltres1.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeBatiments.setBorder(BorderFactory.createTitledBorder("Bâtiments"));
 
-
-        // REQUETE POUR GET TOUS LES CAPTEURS //
-
-        listeCapteurs1.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][]{
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null}
-                },
-                new String[]{
-                        "Title 1", "Title 2", "Title 3", "Title 4"
-                }
-        ));
-
-        scrollPanelListeCapteurs1.setViewportView(listeCapteurs1);
+        scrollPanelListeCapteurs1.setViewportView(tableauCapteurs);
         scrollPanelBatiments.setViewportView(listeBatiments);
 
         btnFiltrer.addActionListener(new ActionListener() {
@@ -200,6 +173,17 @@ public class Interface {
                 refreshBatiments();
             }
         });
+        ActionListener checkListener1 = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshTableauCapteurs();
+            }
+        };
+        checkEau1.addActionListener(checkListener1);
+        checkTemperature1.addActionListener(checkListener1);
+        checkElectricite1.addActionListener(checkListener1);
+        checkAirComprime1.addActionListener(checkListener1);
+
 
         panelFluides1.add(checkEau1);
         panelFluides1.add(checkElectricite1);
@@ -269,16 +253,16 @@ public class Interface {
                 displayCourbesCapteurs();
             }
         });
-        ActionListener checkListener = new ActionListener() {
+        ActionListener checkListener2 = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 refreshListeCapteurs();
             }
         };
-        checkEau2.addActionListener(checkListener);
-        checkTemperature2.addActionListener(checkListener);
-        checkElectricite2.addActionListener(checkListener);
-        checkAirComprime2.addActionListener(checkListener);
+        checkEau2.addActionListener(checkListener2);
+        checkTemperature2.addActionListener(checkListener2);
+        checkElectricite2.addActionListener(checkListener2);
+        checkAirComprime2.addActionListener(checkListener2);
 
         panelFluides2.add(checkEau2);
         panelFluides2.add(checkElectricite2);
@@ -408,24 +392,52 @@ public class Interface {
         String[] batiments = connexion.getAllBatiments();
         listeBatiments.setModel(new AbstractListModel<>() {
             String[] strings = batiments;
+
             public int getSize() {
                 return strings.length;
             }
+
             public String getElementAt(int i) {
                 return strings[i];
             }
         });
     }
 
+    private void refreshTableauCapteurs() {
+        String[] batiments = listeBatiments.getSelectedValuesList().toArray(new String[0]);
+        if( ( checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected() ) && batiments.length > 0) {
+            Capteur[] capteurs = connexion.getAllCapteursFiltresOnglet1(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected(), batiments);
+            String[][] modele = new String[capteurs.length][6];
+            for(int i = 0 ; i< capteurs.length ; i++){
+                modele[i][0] = "Capteur " + capteurs[i].getId();
+                modele[i][1] = capteurs[i].getFluide().getType_fluide();
+                modele[i][2] = capteurs[i].getLieu().getBatiment();
+                modele[i][3] = String.valueOf(capteurs[i].getLieu().getEtage());
+                modele[i][4] = capteurs[i].getLieu().getNom();
+                modele[i][5] = "0";
+            }
+
+            tableauCapteurs.setModel(new javax.swing.table.DefaultTableModel(
+                    modele, new String[]{"Nom", "Type Fluide", "Batiment", "Etage", "Lieu", "Valeur"}
+            ));
+        }
+        else {  // tableau vide
+            tableauCapteurs.setModel(new javax.swing.table.DefaultTableModel(
+                    new Object[][] {}, new String[]{"Nom", "Type Fluide", "Batiment", "Etage", "Lieu", "Valeur"}
+            ));
+        }
+    }
+
     private void refreshListeCapteurs() {
 
-        System.out.println("yolo" + checkAirComprime2.isSelected() + checkEau2.isSelected() + checkElectricite2.isSelected() + checkTemperature2.isSelected());
         String[] capteurs = connexion.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
         listeCapteurs2.setModel(new AbstractListModel<>() {
             String[] strings = capteurs;
+
             public int getSize() {
                 return strings.length;
             }
+
             public String getElementAt(int i) {
                 return strings[i];
             }
@@ -444,45 +456,40 @@ public class Interface {
         connexion = new Connexion("jdbc:mysql://localhost:" + textPort.getText() + "/capteur", "root", "");
         dialogPort.setVisible(false);
 
-        if(!connexion.connect()){
+        if (!connexion.connect()) {
             System.err.println("Could not connect to database");
             System.exit(0);
         }
         refreshBatiments();
+        //refreshTableauCapteurs();
         frame.setVisible(true);
     }
 
-    private static class SelectionModelMax extends DefaultListSelectionModel
-    {
+    private static class SelectionModelMax extends DefaultListSelectionModel {
         private JList list;
         private int maxCount;
 
-        private SelectionModelMax(JList list, int maxCount)
-        {
+        private SelectionModelMax(JList list, int maxCount) {
             this.list = list;
 
             this.maxCount = maxCount;
         }
 
         @Override
-        public void setSelectionInterval(int index0, int index1)
-        {
-            if (index1 - index0 >= maxCount)
-            {
+        public void setSelectionInterval(int index0, int index1) {
+            if (index1 - index0 >= maxCount) {
                 index1 = index0 + maxCount - 1;
             }
             super.setSelectionInterval(index0, index1);
         }
 
         @Override
-        public void addSelectionInterval(int index0, int index1)
-        {
+        public void addSelectionInterval(int index0, int index1) {
             int selectionLength = list.getSelectedIndices().length;
             if (selectionLength >= maxCount)
                 return;
 
-            if (index1 - index0 >= maxCount - selectionLength)
-            {
+            if (index1 - index0 >= maxCount - selectionLength) {
                 index1 = index0 + maxCount - 1 - selectionLength;
             }
             if (index1 < index0)

@@ -20,31 +20,6 @@ public class Lieu {
 
     /*
     ____________________________
-           REQUETES SQL
-    ____________________________
-    */
-
-
-    public static Lieu create ( ResultSet resultSet ) {
-        try {
-            int id = resultSet.getInt("id");
-            String nom = resultSet.getString("nom");
-            String batiment = resultSet.getString("batiment");
-            int etage = resultSet.getInt("etage");
-
-            Lieu salle;
-            salle = new Lieu(id, nom, batiment, etage);
-            return salle;
-
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-            return null;
-        }
-    }
-
-
-    /*
-    ____________________________
         GETTERS & SETTERS
     ____________________________
     */

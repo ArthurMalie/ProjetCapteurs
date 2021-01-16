@@ -6,19 +6,15 @@ import java.sql.SQLException;
 public class Capteur {
 
     private int id;
-    private float valeur;
     private float seuilMin;
     private float seuilMax;
-    private boolean connecte;
     private Lieu lieu;
     private Fluide fluide;
 
-    public Capteur ( int id, float valeur, float seuilMin, float seuilMax, boolean connecte, Lieu lieu, Fluide fluide ) {
+    public Capteur ( int id, float seuilMin, float seuilMax, Lieu lieu, Fluide fluide ) {
         this.id = id;
-        this.valeur = valeur;
         this.seuilMin = seuilMin;
         this.seuilMax = seuilMax;
-        this.connecte = connecte;
         this.lieu = lieu;
         this.fluide = fluide;
     }
@@ -34,30 +30,23 @@ public class Capteur {
         try {
 
             int idC = resultSet.getInt("idC");
-            float valeur = resultSet.getFloat("valeur");
             float seuilMin = resultSet.getFloat("seuilMin");
             float seuilMax = resultSet.getFloat("seuilMax");
-            boolean connecte = resultSet.getBoolean("connecte");
 
-            int idL = resultSet.getInt("idL");
-            String nom = resultSet.getString("nom");
-            String batiment = resultSet.getString("batiment");
+            int idL = resultSet.getInt("Capteur.idL");
+            String nom = resultSet.getString("nomL");
+            String batiment = resultSet.getString("nomB");
             int etage = resultSet.getInt("etage");
 
-            Lieu lieu;
-            lieu = new Lieu(idL, nom, batiment, etage);
+            Lieu lieu = new Lieu(idL, nom, batiment, etage);
 
             String unite = resultSet.getString("unite");
-            float seuilDefautMin = resultSet.getFloat("seuilDefautMin");
-            float seuilDefautMax = resultSet.getFloat("seuilDefautMax");
-            TYPEFLUIDE type_fluide = resultSet.getObject("etage", TYPEFLUIDE.class);
+            String type_fluide = resultSet.getString("Capteur.typeF");
 
             Fluide fluide;
-            fluide = new Fluide(unite, seuilDefautMin, seuilDefautMax, type_fluide);
+            fluide = new Fluide(unite, type_fluide);
 
-            Capteur capteur;
-            capteur = new Capteur(idC, valeur, seuilMin, seuilMax, connecte, lieu, fluide);
-            return capteur;
+            return new Capteur(idC, seuilMin, seuilMax, lieu, fluide);
 
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -80,14 +69,6 @@ public class Capteur {
         this.id = id;
     }
 
-    public float getValeur () {
-        return valeur;
-    }
-
-    public void setValeur ( float valeur ) {
-        this.valeur = valeur;
-    }
-
     public float getSeuilMin () {
         return seuilMin;
     }
@@ -102,14 +83,6 @@ public class Capteur {
 
     public void setSeuilMax ( float seuilMax ) {
         this.seuilMax = seuilMax;
-    }
-
-    public boolean isConnecte () {
-        return connecte;
-    }
-
-    public void setConnecte ( boolean connecte ) {
-        this.connecte = connecte;
     }
 
     public Lieu getLieu () {

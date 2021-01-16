@@ -1,5 +1,7 @@
 package Connexion;
 
+import Mapping.Capteur;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +131,7 @@ public class Connexion {
     ____________________________
     */
 
-    public String[] getAllBatiments () {
+    public String[] getAllBatiments() {
         List<String> list = new ArrayList<>();
         ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
         try {
@@ -141,7 +143,7 @@ public class Connexion {
         return list.toArray((new String[list.size()]));
     }
 
-    public String[] getAllCapteursId () {
+    public String[] getAllCapteursId() {
         List<String> list = new ArrayList<>();
         ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
         try {
@@ -153,23 +155,24 @@ public class Connexion {
         return list.toArray((new String[list.size()]));
     }
 
-    public String[] getAllCapteursFiltres(boolean airComprime, boolean eau, boolean electricite, boolean temperature){
+    public String[] getAllCapteursFiltres(boolean airComprime, boolean eau, boolean electricite, boolean temperature) {
         List<String> list = new ArrayList<>();
         String fluides = "";
-        if(airComprime)
-            fluides += "AIR_COMPRIME,";
-        if(eau)
-            fluides += "EAU,";
-        if(electricite)
-            fluides += "ELECTRICITE,";
-        if(temperature)
-            fluides += "TEMPERATURE,";
-        fluides= fluides.substring(0,fluides.length()-1);
+        if (airComprime)
+            fluides += "'AIR_COMPRIME',";
+        if (eau)
+            fluides += "'EAU',";
+        if (electricite)
+            fluides += "'ELECTRICITE',";
+        if (temperature)
+            fluides += "'TEMPERATURE',";
+        if(fluides.length() > 0)
+            fluides = fluides.substring(0, fluides.length() - 1);
 
         ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR WHERE TYPEF IN (" + fluides + ");");
         try {
             while (resultSet.next()) {
-                    list.add("Capteur " + resultSet.getInt("IDC"));
+                list.add("Capteur " + resultSet.getInt("IDC"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -177,30 +180,37 @@ public class Connexion {
         return list.toArray((new String[list.size()]));
     }
 
-    public String[] getAllCapteursFiltresOnglet1(boolean airComprime, boolean eau, boolean electricite, boolean temperature, String[] batiments){
-        List<String> list = new ArrayList<>();
-        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR");
+    public Capteur[] getAllCapteursFiltresOnglet1(boolean airComprime, boolean eau, boolean electricite, boolean temperature, String[] batiments) {
+
+        List<Capteur> list = new ArrayList<>();
+        String fluides = "";
+        if (airComprime)
+            fluides += "'AIR_COMPRIME',";
+        if (eau)
+            fluides += "'EAU',";
+        if (electricite)
+            fluides += "'ELECTRICITE',";
+        if (temperature)
+            fluides += "'TEMPERATURE',";
+        if(fluides.length() > 0)
+            fluides = fluides.substring(0, fluides.length() - 1);
+
+        String batimentsIn = "";
+        for (String bat : batiments)
+            batimentsIn += "'" + bat + "',";
+        if(batimentsIn.length() > 0)
+            batimentsIn = batimentsIn.substring(0, batimentsIn.length() - 1);
+
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,LIEU,FLUIDE WHERE CAPTEUR.IDL = LIEU.IDL AND CAPTEUR.TYPEF = FLUIDE.TYPEF AND CAPTEUR.TYPEF IN (" + fluides + ") AND CAPTEUR.IDL IN (SELECT IDL FROM LIEU WHERE NOMB IN (" + batimentsIn + "));");
         try {
             while (resultSet.next()) {
-                if (airComprime && resultSet.getString("TYPEF").equals("AIR_COMPRIME")) {
-                    list.add("Capteur " + resultSet.getInt("IDC"));
-                }
-                if (eau && resultSet.getString("TYPEF").equals("EAU")) {
-                    list.add("Capteur " + resultSet.getInt("IDC"));
-                }
-                if (electricite && resultSet.getString("TYPEF").equals("ELECTRICITE")) {
-                    list.add("Capteur " + resultSet.getInt("IDC"));
-                }
-                if (temperature && resultSet.getString("TYPEF").equals("TEMPERATURE")) {
-                    list.add("Capteur " + resultSet.getInt("IDC"));
-                }
 
+                list.add(Capteur.create(resultSet));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return list.toArray((new String[list.size()]));
-
+        return list.toArray((new Capteur[list.size()]));
 
     }
 
