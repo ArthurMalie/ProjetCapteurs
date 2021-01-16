@@ -1,6 +1,10 @@
 package Connexion;
 
+import Mapping.Capteur;
+
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Connexion {
 
@@ -47,6 +51,7 @@ public class Connexion {
         try {
 
             connection = DriverManager.getConnection(address + "?zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC", username, password);
+            statement = connection.createStatement();
 
         } catch (SQLException e) {
 
@@ -126,7 +131,17 @@ public class Connexion {
     ____________________________
     */
 
+    public List<String> getBatiments() {
+        List<String> list = new ArrayList<>();
+        ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
 
-
+        try {
+            while (resultSet.next())
+                list.add(resultSet.getString("NOMB"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
 }

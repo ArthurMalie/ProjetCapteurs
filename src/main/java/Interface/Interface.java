@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class Interface {
 
@@ -19,7 +20,7 @@ public class Interface {
     private JButton btnValiderPort;
     private JButton btnAnnulerPort;
     private JButton btnFiltrer;
-    private JButton btnValiderFiltres2;
+    private JButton btnValiderCourbes;
     private JButton btnModifierSeuils;
     private JButton btnValiderSeuils;
     private JButton btnAnnulerSeuils;
@@ -163,19 +164,6 @@ public class Interface {
         panelFiltres1.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeBatiments.setBorder(BorderFactory.createTitledBorder("Bâtiments"));
 
-        // REQUETE POUR GET TOUS LES BATIMENTS //
-
-        listeBatiments.setModel(new AbstractListModel<>() {
-            String[] strings = {"Item 1", "Item 26566465468184384384", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5"};
-
-            public int getSize() {
-                return strings.length;
-            }
-
-            public String getElementAt(int i) {
-                return strings[i];
-            }
-        });
 
         // REQUETE POUR GET TOUS LES CAPTEURS //
 
@@ -249,7 +237,7 @@ public class Interface {
         checkTemperature2 = new JCheckBox("Temperature");
         textDateDebut = new JTextField("01/01/2020");
         textDateFin = new JTextField("01/01/2022");
-        btnValiderFiltres2 = new JButton("Valider");
+        btnValiderCourbes = new JButton("Valider");
 
         panelFiltres2.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeCapteurs2.setBorder(BorderFactory.createTitledBorder("Capteurs"));
@@ -276,10 +264,10 @@ public class Interface {
 
         scrollPanelListeCapteurs2.setViewportView(listeCapteurs2);
 
-        btnValiderFiltres2.addActionListener(new ActionListener() {
+        btnValiderCourbes.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                refreshCapteurs();
+                refreshCourbesCapteurs();
             }
         });
 
@@ -292,7 +280,7 @@ public class Interface {
         panelDates2.add(labelA);
         panelDates2.add(textDateFin);
         panelDates.add(panelDates2, BorderLayout.CENTER);
-        panelDates.add(btnValiderFiltres2, BorderLayout.PAGE_END);
+        panelDates.add(btnValiderCourbes, BorderLayout.PAGE_END);
         panelFiltres2.add(panelFluides2, BorderLayout.PAGE_START);
         panelFiltres2.add(panelDates, BorderLayout.PAGE_END);
         panelCourbes.add(panelCourbe1);
@@ -408,10 +396,23 @@ public class Interface {
     }
 
     private void refreshBatiments() {
+        List<String> batiments = connexion.getBatiments();
+        listeBatiments.setModel(new AbstractListModel<>() {
+            String[] strings = batiments.toArray(new String[batiments.size()]);
+            public int getSize() {
+                return strings.length;
+            }
+            public String getElementAt(int i) {
+                return strings[i];
+            }
+        });
+
 
     }
 
-    private void refreshCapteurs() {
+    private void refreshCourbesCapteurs() {
+        //List<String> capteurs = connexion.getCapteurs(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected(), textDateDebut.getText(), textDateFin.getText());
+        listeCapteurs2.setSelectionModel(new MySelectionModel(listeCapteurs2, 3));
     }
 
     private void editSeuils() {
@@ -421,11 +422,50 @@ public class Interface {
         connexion = new Connexion("jdbc:mysql://localhost:" + textPort.getText() + "/capteur", "root", "");
         dialogPort.setVisible(false);
 
-        if(connexion.connect())
-            frame.setVisible(true);
-        else {
+        if(!connexion.connect()){
             System.err.println("Could not connect to database");
             System.exit(0);
+        }
+        refreshBatiments();
+        frame.setVisible(true);
+    }
+
+    private static class MySelectionModel extends DefaultListSelectionModel
+    {
+        private JList list;
+        private int maxCount;
+
+        private MySelectionModel(JList list,int maxCount)
+        {
+            this.list = list;
+
+            this.maxCount = maxCount;
+        }
+
+        @Override
+        public void setSelectionInterval(int index0, int index1)
+        {
+            if (index1 - index0 >= maxCount)
+            {
+                index1 = index0 + maxCount - 1;
+            }
+            super.setSelectionInterval(index0, index1);
+        }
+
+        @Override
+        public void addSelectionInterval(int index0, int index1)
+        {
+            int selectionLength = list.getSelectedIndices().length;
+            if (selectionLength >= maxCount)
+                return;
+
+            if (index1 - index0 >= maxCount - selectionLength)
+            {
+                index1 = index0 + maxCount - 1 - selectionLength;
+            }
+            if (index1 < index0)
+                return;
+            super.addSelectionInterval(index0, index1);
         }
     }
 }
