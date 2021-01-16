@@ -214,5 +214,36 @@ public class Connexion {
 
     }
 
+    public Capteur[] getAllBatimentsFluide(boolean airComprime, boolean eau, boolean electricite, boolean temperature) {
+
+        List<Capteur> list = new ArrayList<>();
+        String fluides = "";
+        if (airComprime)
+            fluides += "'AIR_COMPRIME',";
+        if (eau)
+            fluides += "'EAU',";
+        if (electricite)
+            fluides += "'ELECTRICITE',";
+        if (temperature)
+            fluides += "'TEMPERATURE',";
+        if(fluides.length() > 0)
+            fluides = fluides.substring(0, fluides.length() - 1);
+
+
+        ResultSet resultSet = executeQuery("SELECT nomB.lieu from lieu where idl in (select capteur.idL from capteur where capteur.typeF in " + fluides + ")) ;");
+        try {
+            while (resultSet.next()) {
+
+                list.add(Capteur.create(resultSet));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray((new Capteur[list.size()]));
+
+    }
+
+
+
 
 }
