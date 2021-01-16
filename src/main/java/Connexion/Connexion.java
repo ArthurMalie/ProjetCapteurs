@@ -1,7 +1,5 @@
 package Connexion;
 
-import Mapping.Capteur;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -142,5 +140,18 @@ public class Connexion {
         }
         return list.toArray((new String[list.size()]));
     }
+
+    public String[] getAllCapteursId () {
+        List<String> list = new ArrayList<>();
+        ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
+        try {
+            while (resultSet.next())
+                list.add("Capteur " + resultSet.getInt("IDC"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray((new String[list.size()]));
+    }
+
 
 }
