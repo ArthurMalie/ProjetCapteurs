@@ -243,6 +243,24 @@ public class Connexion {
 
     }
 
+    public Capteur[] getAllCapteurs() {
+
+        List<Capteur> list = new ArrayList<>();
+
+        ResultSet resultSet = executeQuery("SELECT * from capteur;");
+        try {
+            while (resultSet.next()) {
+                list.add(Capteur.create(resultSet));
+            }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list.toArray((new Capteur[list.size()]));
+
+    }
+
+
 
 
 
