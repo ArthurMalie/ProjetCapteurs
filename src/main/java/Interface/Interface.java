@@ -528,8 +528,8 @@ public class Interface {
                 connexion.updateSeuils(idCapteur, textSeuilMin.getText(), textSeuilMax.getText());
                 displayInfosCapteur(connexion.getCapteurById(idCapteur));
             }
+            dialogSeuils.setVisible(false);
         }
-        dialogSeuils.setVisible(false);
     }
 
     private void generateTree() {
