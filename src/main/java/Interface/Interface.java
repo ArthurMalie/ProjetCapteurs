@@ -225,20 +225,6 @@ public class Interface {
         panelFiltres2.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeCapteurs2.setBorder(BorderFactory.createTitledBorder("Capteurs"));
 
-        // REQUETE POUR GET TOUS LES NOMS DE CAPTEURS
-
-        listeCapteurs2.setModel(new AbstractListModel<>() {
-            String[] strings = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5"};
-
-            public int getSize() {
-                return strings.length;
-            }
-
-            public String getElementAt(int i) {
-                return strings[i];
-            }
-        });
-
         panelFiltres2.add(scrollPanelListeCapteurs2, BorderLayout.CENTER);
 
         panelCourbe1.setBackground(new Color(204, 255, 204));
@@ -316,10 +302,8 @@ public class Interface {
                 },
                 new String[]{"Informations", "Valeurs"}
         ) {
-            boolean[] canEdit = new boolean[]{false, false};
-
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return false;
             }
         });
 
@@ -332,17 +316,8 @@ public class Interface {
                 },
                 new String[]{"Fluide", "Seuil min", "Seuil max", "Unite"}
         ) {
-            Class[] types = new Class[]{
-                    Object.class, Integer.class, Integer.class, String.class
-            };
-            boolean[] canEdit = new boolean[]{false, false, false, false};
-
-            public Class getColumnClass(int columnIndex) {
-                return types[columnIndex];
-            }
-
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return false;
             }
         });
 
@@ -388,27 +363,70 @@ public class Interface {
         frame.pack();
     }
 
+    private void etablirConnexion() {
+        connexion = new Connexion("jdbc:mysql://localhost:" + textPort.getText() + "/capteur", "root", "");
+        dialogPort.setVisible(false);
+
+        if (!connexion.connect()) {
+            System.err.println("Could not connect to database");
+            System.exit(0);
+        }
+
+        checkTemperature1.setSelected(true);
+        checkElectricite1.setSelected(true);
+        checkEau1.setSelected(true);
+        checkAirComprime1.setSelected(true);
+        refreshBatiments();
+        int[] selected = new int[listeBatiments.getVisibleRowCount()];
+        for (int i = 0; i < selected.length; i++)
+            selected[i] = i;
+        listeBatiments.setSelectedIndices(selected);
+        refreshTableauCapteurs();
+
+        checkTemperature2.setSelected(true);
+        checkElectricite2.setSelected(true);
+        checkEau2.setSelected(true);
+        checkAirComprime2.setSelected(true);
+        refreshListeCapteurs();
+
+        frame.setVisible(true);
+    }
+
     private void refreshBatiments() {
-        String[] batiments = connexion.getBatimentsFluides(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected());
-        listeBatiments.setModel(new AbstractListModel<>() {
-            String[] strings = batiments;
+        if (checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected()) {
+            String[] batiments = connexion.getBatimentsFluides(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected());
+            listeBatiments.setModel(new AbstractListModel<>() {
+                String[] strings = batiments;
 
-            public int getSize() {
-                return strings.length;
-            }
+                public int getSize() {
+                    return strings.length;
+                }
 
-            public String getElementAt(int i) {
-                return strings[i];
-            }
-        });
+                public String getElementAt(int i) {
+                    return strings[i];
+                }
+            });
+        } else { // liste vide
+            listeBatiments.setModel(new AbstractListModel<>() {
+                String[] strings = {};
+
+                public int getSize() {
+                    return 0;
+                }
+
+                public String getElementAt(int i) {
+                    return null;
+                }
+            });
+        }
     }
 
     private void refreshTableauCapteurs() {
         String[] batiments = listeBatiments.getSelectedValuesList().toArray(new String[0]);
-        if( ( checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected() ) && batiments.length > 0) {
+        if ((checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected()) && batiments.length > 0) {
             Capteur[] capteurs = connexion.getAllCapteursFiltresOnglet1(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected(), batiments);
             String[][] modele = new String[capteurs.length][6];
-            for(int i = 0 ; i< capteurs.length ; i++){
+            for (int i = 0; i < capteurs.length; i++) {
                 modele[i][0] = "Capteur " + capteurs[i].getId();
                 modele[i][1] = capteurs[i].getFluide().getType_fluide();
                 modele[i][2] = capteurs[i].getLieu().getBatiment();
@@ -419,50 +437,54 @@ public class Interface {
 
             tableauCapteurs.setModel(new javax.swing.table.DefaultTableModel(
                     modele, new String[]{"Nom", "Type Fluide", "Batiment", "Etage", "Lieu", "Valeur"}
-            ));
-        }
-        else {  // tableau vide
+            ){
+                public boolean isCellEditable(int rowIndex, int columnIndex) {
+                    return false;
+                }
+            });
+        } else {  // tableau vide
             tableauCapteurs.setModel(new javax.swing.table.DefaultTableModel(
-                    new Object[][] {}, new String[]{"Nom", "Type Fluide", "Batiment", "Etage", "Lieu", "Valeur"}
+                    new Object[][]{}, new String[]{"Nom", "Type Fluide", "Batiment", "Etage", "Lieu", "Valeur"}
             ));
         }
     }
 
     private void refreshListeCapteurs() {
+        if (checkAirComprime2.isSelected() || checkEau2.isSelected() || checkElectricite2.isSelected() || checkTemperature2.isSelected()) {
+            String[] capteurs = connexion.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
+            listeCapteurs2.setModel(new AbstractListModel<>() {
+                String[] strings = capteurs;
 
-        String[] capteurs = connexion.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
-        listeCapteurs2.setModel(new AbstractListModel<>() {
-            String[] strings = capteurs;
+                public int getSize() {
+                    return strings.length;
+                }
 
-            public int getSize() {
-                return strings.length;
-            }
+                public String getElementAt(int i) {
+                    return strings[i];
+                }
+            });
+            listeCapteurs2.setSelectionModel(new Interface.SelectionModelMax(listeCapteurs2, 3));
+        } else { // liste vide
+            listeCapteurs2.setModel(new AbstractListModel<>() {
+                String[] strings = {};
 
-            public String getElementAt(int i) {
-                return strings[i];
-            }
-        });
+                public int getSize() {
+                    return 0;
+                }
+
+                public String getElementAt(int i) {
+                    return null;
+                }
+            });
+        }
     }
 
     private void displayCourbesCapteurs() {
         //List<String> capteurs = connexion.getCapteurs(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected(), textDateDebut.getText(), textDateFin.getText());
-        listeCapteurs2.setSelectionModel(new Interface.SelectionModelMax(listeCapteurs2, 3));
+
     }
 
     private void editSeuils() {
-    }
-
-    private void etablirConnexion() {
-        connexion = new Connexion("jdbc:mysql://localhost:" + textPort.getText() + "/capteur", "root", "");
-        dialogPort.setVisible(false);
-
-        if (!connexion.connect()) {
-            System.err.println("Could not connect to database");
-            System.exit(0);
-        }
-        //refreshBatiments();
-        //refreshTableauCapteurs();
-        frame.setVisible(true);
     }
 
     private static class SelectionModelMax extends DefaultListSelectionModel {
