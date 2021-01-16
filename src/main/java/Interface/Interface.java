@@ -1,11 +1,15 @@
 package Interface;
 
+import Connexion.Connexion;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class Interface {
+
+    private Connexion connexion;
 
     private JFrame frame;
 
@@ -14,7 +18,8 @@ public class Interface {
 
     private JButton btnValiderPort;
     private JButton btnAnnulerPort;
-    private JButton btnValiderDates;
+    private JButton btnFiltrer;
+    private JButton btnValiderFiltres2;
     private JButton btnModifierSeuils;
     private JButton btnValiderSeuils;
     private JButton btnAnnulerSeuils;
@@ -72,7 +77,7 @@ public class Interface {
         JLabel labelConnexion = new JLabel("Connexion à l'interface de visualisation NeoCampus");
         JLabel labelPort = new JLabel("Veuillez renseigner le port sur lequel vous souhaitez vous connecter :");
         textPort = new JTextField("8080");
-        btnAnnulerPort = new JButton("Annuler");
+        btnAnnulerPort = new JButton("Quitter");
         btnValiderPort = new JButton("Valider");
 
         dialogPort.setResizable(false);
@@ -106,6 +111,8 @@ public class Interface {
 
         dialogPort.add(panelPort);
 
+        dialogPort.setVisible(true);
+
 
 
         /* Boite de dialogue pour la modification des seuils */
@@ -137,7 +144,6 @@ public class Interface {
         dialogSeuils.add(panelDialogSeuils);
 
 
-        dialogPort.setVisible(true);
 
         /* Onglet 1 - Visualisation en temps réel */
 
@@ -152,6 +158,7 @@ public class Interface {
         checkElectricite1 = new JCheckBox("Electricite");
         checkAirComprime1 = new JCheckBox("Air comprime");
         checkTemperature1 = new JCheckBox("Temperature");
+        btnFiltrer = new JButton("Filtrer");
 
         panelFiltres1.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeBatiments.setBorder(BorderFactory.createTitledBorder("Bâtiments"));
@@ -159,7 +166,7 @@ public class Interface {
         // REQUETE POUR GET TOUS LES BATIMENTS //
 
         listeBatiments.setModel(new AbstractListModel<>() {
-            String[] strings = {"Item 1", "Item 26566465468184384384", "Item 3", "Item 4", "Item 5"};
+            String[] strings = {"Item 1", "Item 26566465468184384384", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5", "Item 3", "Item 4", "Item 5"};
 
             public int getSize() {
                 return strings.length;
@@ -178,6 +185,18 @@ public class Interface {
                         {null, null, null, null},
                         {null, null, null, null},
                         {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
+                        {null, null, null, null},
                         {null, null, null, null}
                 },
                 new String[]{
@@ -188,12 +207,20 @@ public class Interface {
         scrollPanelListeCapteurs1.setViewportView(listeCapteurs1);
         scrollPanelBatiments.setViewportView(listeBatiments);
 
+        btnFiltrer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshBatiments();
+            }
+        });
+
         panelFluides1.add(checkEau1);
         panelFluides1.add(checkElectricite1);
         panelFluides1.add(checkAirComprime1);
         panelFluides1.add(checkTemperature1);
         panelFiltres1.add(panelFluides1, BorderLayout.PAGE_START);
         panelFiltres1.add(scrollPanelBatiments, BorderLayout.CENTER);
+        panelFiltres1.add(btnFiltrer, BorderLayout.PAGE_END);
         onglet1.add(panelFiltres1, BorderLayout.LINE_END);
         onglet1.add(scrollPanelListeCapteurs1, BorderLayout.CENTER);
 
@@ -222,7 +249,7 @@ public class Interface {
         checkTemperature2 = new JCheckBox("Temperature");
         textDateDebut = new JTextField("01/01/2020");
         textDateFin = new JTextField("01/01/2022");
-        btnValiderDates = new JButton("Valider");
+        btnValiderFiltres2 = new JButton("Valider");
 
         panelFiltres2.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeCapteurs2.setBorder(BorderFactory.createTitledBorder("Capteurs"));
@@ -249,6 +276,13 @@ public class Interface {
 
         scrollPanelListeCapteurs2.setViewportView(listeCapteurs2);
 
+        btnValiderFiltres2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshCapteurs();
+            }
+        });
+
         panelFluides2.add(checkEau2);
         panelFluides2.add(checkElectricite2);
         panelFluides2.add(checkAirComprime2);
@@ -258,7 +292,7 @@ public class Interface {
         panelDates2.add(labelA);
         panelDates2.add(textDateFin);
         panelDates.add(panelDates2, BorderLayout.CENTER);
-        panelDates.add(btnValiderDates, BorderLayout.PAGE_END);
+        panelDates.add(btnValiderFiltres2, BorderLayout.PAGE_END);
         panelFiltres2.add(panelFluides2, BorderLayout.PAGE_START);
         panelFiltres2.add(panelDates, BorderLayout.PAGE_END);
         panelCourbes.add(panelCourbe1);
@@ -337,6 +371,26 @@ public class Interface {
         scrollPanelSeuilsDefaut.setViewportView(tableauSeuilsDefaut);
         scrollPanelTree.setViewportView(treeCapteurs);
 
+        btnModifierSeuils.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialogSeuils.setVisible(true);
+            }
+        });
+        btnValiderSeuils.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                editSeuils();
+            }
+        });
+        btnAnnulerSeuils.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialogSeuils.setVisible(false);
+            }
+        });
+
+
         panelInfosCapteur.add(scrollPanelInfosCapteur, BorderLayout.CENTER);
         panelInfosCapteur.add(btnModifierSeuils, BorderLayout.PAGE_END);
         panelSeuilsDefaut.add(scrollPanelSeuilsDefaut, BorderLayout.CENTER);
@@ -351,15 +405,27 @@ public class Interface {
         frame.setLocationRelativeTo(null);
 
         frame.pack();
-        dialogPort.setVisible(true);
+    }
+
+    private void refreshBatiments() {
+
+    }
+
+    private void refreshCapteurs() {
+    }
+
+    private void editSeuils() {
     }
 
     private void etablirConnexion() {
+        connexion = new Connexion("jdbc:mysql://localhost:" + textPort.getText() + "/capteur", "root", "");
         dialogPort.setVisible(false);
-        frame.setVisible(true);
-    }
 
-    public static void main(String args[]) {
-        SwingUtilities.invokeLater(() -> new Interface());
+        if(connexion.connect())
+            frame.setVisible(true);
+        else {
+            System.err.println("Could not connect to database");
+            System.exit(0);
+        }
     }
 }

@@ -11,7 +11,7 @@ public class Connexion {
     private Connection connection;
     private Statement statement;
 
-    public Connexion ( String address, String username, String password ) {
+    public Connexion(String address, String username, String password) {
         this.connected = false;
         this.address = address;
         this.username = username;
@@ -21,40 +21,38 @@ public class Connexion {
 
     /*
     ____________________________
-        CONNECTION & ERREURS
+        CONNECTION & ERRORS
     ____________________________
     */
 
-    public boolean connect () {
+    public boolean connect() {
 
         System.out.println("-------- MySQL JDBC Connection Testing ------");
 
-        try {
+        /*try {
+
             Class.forName("com.mysql.jdbc.Driver").newInstance();
-        } catch (ClassNotFoundException e) {
+
+        } catch (Exception e) {
+
             this.connected = false;
             System.err.println("Could not find the MySQL JDBC Driver");
             e.printStackTrace();
             return false;
 
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
         }
+*/
         System.out.println("MySQL JDBC Driver Registered!");
 
         try {
-            Connection conn =
-                    DriverManager.getConnection("jdbc:mysql://localhost:3306/capteur" +
-                            "user=root&password="); }
-        catch (SQLException e) {
+
+            connection = DriverManager.getConnection(address + "?zeroDateTimeBehavior=CONVERT_TO_NULL&serverTimezone=UTC", username, password);
+
+        } catch (SQLException e) {
 
             this.connected = false;
             System.err.println("Connection Failed!");
-            System.out.println("SQLException: " + e.getMessage());
-            System.out.println("SQLState: " + e.getSQLState());
-            System.out.println("VendorError: " + e.getErrorCode());
+            e.printStackTrace();
             return false;
 
         }
@@ -74,7 +72,7 @@ public class Connexion {
         }
     }
 
-    public ResultSet executeQuery ( String query ) {
+    public ResultSet executeQuery(String query) {
 
         try {
             return statement.executeQuery(query);
@@ -85,7 +83,7 @@ public class Connexion {
         }
     }
 
-    public int executeUpdate ( String query ) {
+    public int executeUpdate(String query) {
 
         try {
             return statement.executeUpdate(query);
@@ -102,31 +100,33 @@ public class Connexion {
     ____________________________
     */
 
-    public boolean isConnected () {
+    public boolean isConnected() {
         return connected;
     }
 
-    public void setConnected ( boolean connected ) {
+    public void setConnected(boolean connected) {
         this.connected = connected;
     }
 
-    public String getAddress () {
+    public String getAddress() {
         return address;
     }
 
-    public String getUsername () {
+    public String getUsername() {
         return username;
     }
 
-    public String getPassword () {
+    public String getPassword() {
         return password;
     }
 
     /*
     ____________________________
-        REQUESTS SQL
+        SQL REQUESTS
     ____________________________
     */
+
+
 
 
 }
