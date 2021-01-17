@@ -9,15 +9,15 @@ public class Serveur implements Runnable {
 
     private Interface ui;
 
-    private static final int PORT = 8952;
+    private int port;
     Socket socket;
     ServerSocket server;
 
-    public Serveur(Interface ui) {
+    public Serveur(Interface ui, int port) {
         this.ui = ui;
 
         try {
-            server = new ServerSocket(PORT);
+            server = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }

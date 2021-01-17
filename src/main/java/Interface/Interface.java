@@ -27,6 +27,7 @@ public class Interface {
 
     private Database database;
     private Map<Capteur, Boolean> capteurs;
+    private int portDatabase;
 
 
     /* Composants Java Swing */
@@ -75,20 +76,21 @@ public class Interface {
     private JScrollPane scrollPanelTree;
 
 
-    public Interface() {
+    public Interface(int portDatabase) {
         frame = new JFrame("Gestion des capteurs");
         capteurs = new HashMap<>();
+        this.portDatabase = portDatabase;
         initialisation();
     }
 
     private void etablirConnexion() {
 
-        Serveur serveur = new Serveur(this);
+        Serveur serveur = new Serveur(this, Integer.parseInt(textPort.getText()));
         Thread t = new Thread(serveur);
         t.start();
 
 
-        database = new Database("jdbc:mysql://localhost:" + textPort.getText() + "/capteurs", "root", "");
+        database = new Database("jdbc:mysql://localhost:" + portDatabase + "/capteurs", "root", "");
         dialogPort.setVisible(false);
 
         if (!database.connect()) {
@@ -190,9 +192,9 @@ public class Interface {
 
         dialogPort = new JDialog();
         JPanel panelPort = new JPanel(new GridLayout(5, 1));
-        JLabel labelConnexion = new JLabel("Connexion à l'interface de visualisation NeoCampus");
+        JLabel labelConnexion = new JLabel("Connexion a l'interface de visualisation NeoCampus");
         JLabel labelPort = new JLabel("Veuillez renseigner le port sur lequel vous souhaitez vous connecter :");
-        textPort = new JTextField("3306");
+        textPort = new JTextField("8952");
         btnAnnulerPort = new JButton("Quitter");
         btnValiderPort = new JButton("Valider");
 
