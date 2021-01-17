@@ -12,68 +12,57 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 public class Graphique {
-    private final int idC;
+    private final String nomC;
     private final Database connection;
     private final String dateDebut;
     private final String dateFin;
 
-    public Graphique (int idC, Database connection, String dateDebut, String dateFin ) {
-        this.idC = idC;
+    public Graphique(String nomC, Database connection, String dateDebut, String dateFin) {
+        this.nomC = nomC;
         this.connection = connection;
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
     }
 
-    public ChartPanel create () throws SQLException {
+    public ChartPanel create() {
 
-        String chartTitle = " Capteur " + idC;
+        String chartTitle = nomC;
         String xAxisLabel = "Date/Time";
         String yAxisLabel = "Valeur";
         XYDataset dataset = createDataset();
-        boolean showLegend = true;
+        boolean showLegend = false;
         boolean createURL = false;
         boolean createTooltip = false;
-
 
         JFreeChart chart = ChartFactory.createTimeSeriesChart(chartTitle,
                 xAxisLabel, yAxisLabel, dataset,
                 showLegend, createTooltip, createURL);
 
-
         XYPlot plot = chart.getXYPlot();
-        int width = 300;
-        int height = 200;
-
 
         DateAxis axis = (DateAxis) plot.getDomainAxis();
-        axis.setDateFormatOverride(new SimpleDateFormat("dd-MMM-yyyy HH:mm"));
+        axis.setDateFormatOverride(new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss"));
 
         return new ChartPanel(chart);
     }
 
-    public XYDataset createDataset () throws SQLException {
-        TimeSeriesCollection mydata = new TimeSeriesCollection();
+    private XYDataset createDataset() {
         TimeSeries series11 = new TimeSeries("Data 1");
         try {
             //This query helps to fetch the data from the database.
 
-            ResultSet y = connection.executeQuery("SELECT `valeur` FROM `donnee`");
-            ResultSet x = connection.executeQuery("SELECT `dateTime` FROM `donnee`");
-            ResultSet table = connection.executeQuery("SELECT * FROM `donnee` WHERE idC=" + idC + " AND dateTime BETWEEN" + dateDebut + " AND " + dateFin);
+            ResultSet table = connection.executeQuery("SELECT * FROM `donnee` WHERE nomC='" + nomC + "' AND dateTime BETWEEN '" + dateDebut + "' AND '" + dateFin + "'");
 
             while (table.next()) {
                 Timestamp time = table.getTimestamp("dateTime");
                 Double value = table.getDouble("valeur");
                 series11.addOrUpdate(new Millisecond(time), value);
-                System.out.println("The date" + time);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         TimeSeriesCollection dataset = new TimeSeriesCollection();
@@ -89,8 +78,8 @@ public class Graphique {
     ____________________________
     */
 
-    public int getIdC () {
-        return idC;
+    public String getIdC() {
+        return nomC;
     }
 
 }

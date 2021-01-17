@@ -131,7 +131,7 @@ public class Database {
     }
 
     public int addDonnee(String nomC, float valeur){
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
         LocalDateTime now = LocalDateTime.now();
         return executeUpdate("INSERT INTO DONNEE (NOMC, DATETIME, VALEUR) VALUES ('" +
                 nomC + "','" +

@@ -2,6 +2,13 @@ package Interface;
 
 import Connexion.*;
 import Mapping.*;
+import com.github.lgooddatepicker.components.DatePickerSettings;
+import com.github.lgooddatepicker.components.DateTimePicker;
+import com.github.lgooddatepicker.components.TimePicker;
+import com.github.lgooddatepicker.components.TimePickerSettings;
+import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -53,11 +60,16 @@ public class Interface {
     private JTable tableauInfosCapteur;
     private JTable tableauSeuilsDefaut;
 
-    private JTextField textDateFin;
-    private JTextField textDateDebut;
+    private DateTimePicker datePickerFin;
+    private DateTimePicker datePickerDebut;
     private JTextField textPort;
     private JTextField textSeuilMin;
     private JTextField textSeuilMax;
+
+    private ChartPanel panelCourbe1;
+    private ChartPanel panelCourbe2;
+    private ChartPanel panelCourbe3;
+    private JPanel panelCourbes;
 
     private JTree treeCapteurs;
     private JScrollPane scrollPanelTree;
@@ -132,6 +144,8 @@ public class Interface {
                     entry.setValue(true);
 
         refreshTableauCapteurs();
+        refreshBatiments();
+        refreshListeCapteurs();
     }
 
     public void deconnecterCapteur(String nomC) {
@@ -140,6 +154,8 @@ public class Interface {
                 entry.setValue(false);
 
         refreshTableauCapteurs();
+        refreshBatiments();
+        refreshListeCapteurs();
     }
 
     public void updateValeur(String nomC, Float valeur) {
@@ -147,7 +163,6 @@ public class Interface {
             Capteur cpt = (Capteur) (entry.getKey());
             if (cpt.getNomC().equals(nomC)) {
                 cpt.setValeur(valeur);
-                System.out.println("SALUT LES POTES");
             }
         }
         database.addDonnee(nomC, valeur);
@@ -310,11 +325,10 @@ public class Interface {
         JPanel panelFiltres2 = new JPanel(new BorderLayout());
         JPanel panelFluides2 = new JPanel(new GridLayout(4, 0));
         JPanel panelDates = new JPanel(new BorderLayout());
-        JPanel panelDates2 = new JPanel(new FlowLayout());
-        JPanel panelCourbes = new JPanel(new GridLayout(3, 0));
-        JPanel panelCourbe1 = new JPanel();
-        JPanel panelCourbe2 = new JPanel();
-        JPanel panelCourbe3 = new JPanel();
+        JPanel panelDates2 = new JPanel(new GridLayout(2, 1));
+        JPanel panelDatesDe = new JPanel(new FlowLayout());
+        JPanel panelDatesA = new JPanel(new FlowLayout());
+        panelCourbes = new JPanel(new GridLayout(3, 1));
         JScrollPane scrollPanelListeCapteurs2 = new JScrollPane();
         JLabel labelDe = new JLabel("de : ");
         JLabel labelA = new JLabel(" a : ");
@@ -323,9 +337,14 @@ public class Interface {
         checkElectricite2 = new JCheckBox("Electricite");
         checkAirComprime2 = new JCheckBox("Air comprime");
         checkTemperature2 = new JCheckBox("Temperature");
-        textDateDebut = new JTextField("01/01/2020");
-        textDateFin = new JTextField("01/01/2022");
         btnValiderCourbes = new JButton("Valider");
+
+        TimePickerSettings timeSettings = new TimePickerSettings();
+        timeSettings.setFormatForDisplayTime(PickerUtilities.createFormatterFromPatternString("HH:mm:ss.SSS", timeSettings.getLocale()));
+        timeSettings.setFormatForMenuTimes(PickerUtilities.createFormatterFromPatternString("HH:mm:ss.SSS", timeSettings.getLocale()));
+
+        datePickerDebut = new DateTimePicker(new DatePickerSettings(), timeSettings);
+        datePickerFin = new DateTimePicker(new DatePickerSettings(), timeSettings);
 
         checkTemperature2.setSelected(true);
         checkElectricite2.setSelected(true);
@@ -337,16 +356,12 @@ public class Interface {
 
         panelFiltres2.add(scrollPanelListeCapteurs2, BorderLayout.CENTER);
 
-        panelCourbe1.setBackground(new Color(204, 255, 204));
-        panelCourbe2.setBackground(new Color(255, 255, 204));
-        panelCourbe3.setBackground(new Color(255, 204, 255));
-
         scrollPanelListeCapteurs2.setViewportView(listeCapteurs2);
 
         btnValiderCourbes.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-//                displayCourbesCapteurs();
+                displayCourbesCapteurs();
             }
         });
         ActionListener checkListener2 = new ActionListener() {
@@ -364,17 +379,16 @@ public class Interface {
         panelFluides2.add(checkElectricite2);
         panelFluides2.add(checkAirComprime2);
         panelFluides2.add(checkTemperature2);
-        panelDates2.add(labelDe);
-        panelDates2.add(textDateDebut);
-        panelDates2.add(labelA);
-        panelDates2.add(textDateFin);
+        panelDatesDe.add(labelDe);
+        panelDatesDe.add(datePickerDebut);
+        panelDatesA.add(labelA);
+        panelDatesA.add(datePickerFin);
+        panelDates2.add(panelDatesDe);
+        panelDates2.add(panelDatesA);
         panelDates.add(panelDates2, BorderLayout.CENTER);
         panelDates.add(btnValiderCourbes, BorderLayout.PAGE_END);
         panelFiltres2.add(panelFluides2, BorderLayout.PAGE_START);
         panelFiltres2.add(panelDates, BorderLayout.PAGE_END);
-        panelCourbes.add(panelCourbe1);
-        panelCourbes.add(panelCourbe2);
-        panelCourbes.add(panelCourbe3);
         onglet2.add(panelFiltres2, BorderLayout.LINE_END);
         onglet2.add(panelCourbes, BorderLayout.CENTER);
 
@@ -482,6 +496,7 @@ public class Interface {
     /* Méthodes ActionPerformed */
     //////////////////////////////
 
+    /* ONGLET 1 */
 
     private void refreshBatiments() {
         if (checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected()) {
@@ -524,8 +539,8 @@ public class Interface {
             List<String> nomsCapteurs = database.getCapteursFiltresOnglet1(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected(), batiments);
             // Les capteurs connectés correspondants aux filtres
             List<Capteur> toDisplay = new ArrayList<>();
-            for(Capteur cpt : connected) {
-                if(nomsCapteurs.contains(cpt.getNomC()))
+            for (Capteur cpt : connected) {
+                if (nomsCapteurs.contains(cpt.getNomC()))
                     toDisplay.add(cpt);
             }
 
@@ -552,6 +567,8 @@ public class Interface {
             ));
         }
     }
+
+    /* ONGLET 2 */
 
     private void refreshListeCapteurs() {
         if (checkAirComprime2.isSelected() || checkEau2.isSelected() || checkElectricite2.isSelected() || checkTemperature2.isSelected()) {
@@ -582,6 +599,37 @@ public class Interface {
             });
         }
     }
+
+    private void displayCourbesCapteurs() {
+
+        List<String> selected = listeCapteurs2.getSelectedValuesList();
+
+        if (selected.size() > 0 && selected.size() < 4
+                && datePickerDebut.getDatePicker().getDate() != null
+                && datePickerDebut.getTimePicker().getTime() != null
+                && datePickerFin.getDatePicker().getDate() != null
+                && datePickerFin.getTimePicker().getTime() != null ) {
+
+            String dateDebut = datePickerDebut.getDatePicker().getDate().toString() + " " + datePickerDebut.getTimePicker().getTime().toString();
+            String dateFin = datePickerFin.getDatePicker().getDate().toString() + " " + datePickerFin.getTimePicker().getTime().toString();
+
+            panelCourbes.removeAll();
+            panelCourbe1 = new Graphique(selected.get(0), database, dateDebut, dateFin).create();
+            panelCourbes.add(panelCourbe1);
+            if (selected.size() > 1) {
+                panelCourbe2 = new Graphique(selected.get(1), database, dateDebut, dateFin).create();
+                panelCourbes.add(panelCourbe2);
+            }
+            if (selected.size() > 2) {
+                panelCourbe3 = new Graphique(selected.get(2), database, dateDebut, dateFin).create();
+                panelCourbes.add(panelCourbe3);
+            }
+            panelCourbes.repaint();
+            frame.repaint();
+        }
+    }
+
+    /* ONGLET 3 */
 
     private void displayInfosCapteur(Capteur capteur) {
         tableauInfosCapteur.setModel(new javax.swing.table.DefaultTableModel(
