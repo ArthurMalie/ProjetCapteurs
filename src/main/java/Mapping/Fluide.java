@@ -1,16 +1,17 @@
 package Mapping;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 public class Fluide {
 
     private String unite;
     private String type_fluide;
+    private float seuilMinDefaut;
+    private float seuilMaxDefaut;
 
-    public Fluide ( String unite, String type_fluide ) {
+    public Fluide ( String unite, String type_fluide, float seuilMinDefaut, float seuilMaxDefaut) {
         this.unite = unite;
         this.type_fluide = type_fluide;
+        this.seuilMinDefaut = seuilMinDefaut;
+        this.seuilMaxDefaut = seuilMaxDefaut;
     }
 
 
@@ -34,5 +35,21 @@ public class Fluide {
 
     public void setType_fluide ( String type_fluide ) {
         this.type_fluide = type_fluide;
+    }
+
+    public float getSeuilMinDefaut() {
+        return seuilMinDefaut;
+    }
+
+    public void setSeuilMinDefaut(float seuilMinDefaut) {
+        this.seuilMinDefaut = seuilMinDefaut;
+    }
+
+    public float getSeuilMaxDefaut() {
+        return seuilMaxDefaut;
+    }
+
+    public void setSeuilMaxDefaut(float seuilMaxDefaut) {
+        this.seuilMaxDefaut = seuilMaxDefaut;
     }
 }

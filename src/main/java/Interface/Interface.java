@@ -1,7 +1,7 @@
 package Interface;
 
-import Connexion.Connexion;
-import Mapping.Capteur;
+import Connexion.*;
+import Mapping.*;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -11,10 +11,18 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Interface {
 
-    private Connexion connexion;
+    private Database database;
+    private Map<Capteur, Boolean> capteurs;
+
+
+    /* Composants Java Swing */
 
     private JFrame frame;
 
@@ -54,9 +62,96 @@ public class Interface {
     private JTree treeCapteurs;
     private JScrollPane scrollPanelTree;
 
+
     public Interface() {
         frame = new JFrame("Gestion des capteurs");
+        capteurs = new HashMap<>();
         initialisation();
+    }
+
+    private void etablirConnexion() {
+
+        Serveur serveur = new Serveur(this);
+        Thread t = new Thread(serveur);
+        t.start();
+
+
+        database = new Database("jdbc:mysql://localhost:" + textPort.getText() + "/capteurs", "root", "");
+        dialogPort.setVisible(false);
+
+        if (!database.connect()) {
+            System.err.println("Could not connect to database");
+            System.exit(0);
+        }
+
+        refreshBatiments();
+        int[] selected = new int[listeBatiments.getVisibleRowCount()];
+        for (int i = 0; i < selected.length; i++)
+            selected[i] = i;
+        listeBatiments.setSelectedIndices(selected);
+
+        refreshTableauCapteurs();
+        refreshListeCapteurs();
+
+        generateTree();
+
+        frame.setVisible(true);
+    }
+
+    public void newMessage(String msg) {
+
+        String[] tokens = msg.split(" ");
+        switch (tokens[0]) {
+            case "Connexion":
+                String[] description = tokens[2].split(":");
+                connecterCapteur(tokens[1], description[0], description[1], description[2], description[3]);
+                break;
+            case "Deconnexion":
+                deconnecterCapteur(tokens[1]);
+                break;
+            case "Donnee":
+                updateValeur(tokens[1], Float.valueOf(tokens[2]));
+                break;
+        }
+    }
+
+    public void connecterCapteur(String nomC, String typeF, String batiment, String etage, String lieu) {
+
+        database.newCapteur(nomC, typeF, batiment, etage, lieu);
+
+        boolean exists = false;
+        for (Map.Entry entry : capteurs.entrySet()) {
+            if (((Capteur) entry.getKey()).getNomC().equals(nomC))
+                exists = true;
+        }
+        if (!exists)
+            capteurs.put(database.getCapteurById(nomC), true);
+        else
+            for (Map.Entry entry : capteurs.entrySet())
+                if (((Capteur) entry.getKey()).getNomC().equals(nomC))
+                    entry.setValue(true);
+
+        refreshTableauCapteurs();
+    }
+
+    public void deconnecterCapteur(String nomC) {
+        for (Map.Entry entry : capteurs.entrySet())
+            if (((Capteur) entry.getKey()).getNomC().equals(nomC))
+                entry.setValue(false);
+
+        refreshTableauCapteurs();
+    }
+
+    public void updateValeur(String nomC, Float valeur) {
+        for (Map.Entry entry : capteurs.entrySet()) {
+            Capteur cpt = (Capteur) (entry.getKey());
+            if (cpt.getNomC().equals(nomC)) {
+                cpt.setValeur(valeur);
+                System.out.println("SALUT LES POTES");
+            }
+        }
+        database.addDonnee(nomC, valeur);
+        refreshTableauCapteurs();
     }
 
     private void initialisation() {
@@ -166,6 +261,11 @@ public class Interface {
         checkTemperature1 = new JCheckBox("Temperature");
         btnFiltrer = new JButton("Filtrer");
 
+        checkTemperature1.setSelected(true);
+        checkElectricite1.setSelected(true);
+        checkEau1.setSelected(true);
+        checkAirComprime1.setSelected(true);
+
         panelFiltres1.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeBatiments.setBorder(BorderFactory.createTitledBorder("Bâtiments"));
 
@@ -227,6 +327,11 @@ public class Interface {
         textDateFin = new JTextField("01/01/2022");
         btnValiderCourbes = new JButton("Valider");
 
+        checkTemperature2.setSelected(true);
+        checkElectricite2.setSelected(true);
+        checkEau2.setSelected(true);
+        checkAirComprime2.setSelected(true);
+
         panelFiltres2.setBorder(BorderFactory.createTitledBorder("Filtres"));
         listeCapteurs2.setBorder(BorderFactory.createTitledBorder("Capteurs"));
 
@@ -241,7 +346,7 @@ public class Interface {
         btnValiderCourbes.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                displayCourbesCapteurs();
+//                displayCourbesCapteurs();
             }
         });
         ActionListener checkListener2 = new ActionListener() {
@@ -334,7 +439,7 @@ public class Interface {
         btnModifierSeuils.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode)treeCapteurs.getLastSelectedPathComponent();
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeCapteurs.getLastSelectedPathComponent();
                 if (treeCapteurs.getSelectionCount() > 0 && node != null && node.isLeaf()) {
                     dialogSeuils.setVisible(true);
                     textSeuilMin.setText("");
@@ -372,40 +477,15 @@ public class Interface {
         frame.pack();
     }
 
-    private void etablirConnexion() {
-        connexion = new Connexion("jdbc:mysql://localhost:" + textPort.getText() + "/capteur", "root", "");
-        dialogPort.setVisible(false);
 
-        if (!connexion.connect()) {
-            System.err.println("Could not connect to database");
-            System.exit(0);
-        }
+    //////////////////////////////
+    /* Méthodes ActionPerformed */
+    //////////////////////////////
 
-        checkTemperature1.setSelected(true);
-        checkElectricite1.setSelected(true);
-        checkEau1.setSelected(true);
-        checkAirComprime1.setSelected(true);
-        refreshBatiments();
-        int[] selected = new int[listeBatiments.getVisibleRowCount()];
-        for (int i = 0; i < selected.length; i++)
-            selected[i] = i;
-        listeBatiments.setSelectedIndices(selected);
-        refreshTableauCapteurs();
-
-        checkTemperature2.setSelected(true);
-        checkElectricite2.setSelected(true);
-        checkEau2.setSelected(true);
-        checkAirComprime2.setSelected(true);
-        refreshListeCapteurs();
-
-        generateTree();
-
-        frame.setVisible(true);
-    }
 
     private void refreshBatiments() {
         if (checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected()) {
-            String[] batiments = connexion.getBatimentsFluides(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected());
+            String[] batiments = database.getBatimentsFluides(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected());
             listeBatiments.setModel(new AbstractListModel<>() {
                 String[] strings = batiments;
 
@@ -435,15 +515,28 @@ public class Interface {
     private void refreshTableauCapteurs() {
         String[] batiments = listeBatiments.getSelectedValuesList().toArray(new String[0]);
         if ((checkAirComprime1.isSelected() || checkEau1.isSelected() || checkElectricite1.isSelected() || checkTemperature1.isSelected()) && batiments.length > 0) {
-            Capteur[] capteurs = connexion.getAllCapteursFiltresOnglet1(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected(), batiments);
-            String[][] modele = new String[capteurs.length][6];
-            for (int i = 0; i < capteurs.length; i++) {
-                modele[i][0] = "Capteur " + capteurs[i].getId();
-                modele[i][1] = capteurs[i].getFluide().getType_fluide();
-                modele[i][2] = capteurs[i].getLieu().getBatiment();
-                modele[i][3] = String.valueOf(capteurs[i].getLieu().getEtage());
-                modele[i][4] = capteurs[i].getLieu().getNom();
-                modele[i][5] = "0";
+            // Tous les capteurs connectés
+            List<Capteur> connected = new ArrayList<>();
+            for (Map.Entry entry : capteurs.entrySet())
+                if ((boolean) entry.getValue())
+                    connected.add((Capteur) entry.getKey());
+            // Tous les noms de capteus correspondants aux filtres (fluides + batiments)
+            List<String> nomsCapteurs = database.getCapteursFiltresOnglet1(checkAirComprime1.isSelected(), checkEau1.isSelected(), checkElectricite1.isSelected(), checkTemperature1.isSelected(), batiments);
+            // Les capteurs connectés correspondants aux filtres
+            List<Capteur> toDisplay = new ArrayList<>();
+            for(Capteur cpt : connected) {
+                if(nomsCapteurs.contains(cpt.getNomC()))
+                    toDisplay.add(cpt);
+            }
+
+            String[][] modele = new String[toDisplay.size()][6];
+            for (int i = 0; i < toDisplay.size(); i++) {
+                modele[i][0] = toDisplay.get(i).getNomC();
+                modele[i][1] = toDisplay.get(i).getFluide().getType_fluide();
+                modele[i][2] = toDisplay.get(i).getBatiment();
+                modele[i][3] = String.valueOf(toDisplay.get(i).getEtage());
+                modele[i][4] = toDisplay.get(i).getLieu();
+                modele[i][5] = String.valueOf(toDisplay.get(i).getValeur());
             }
 
             tableauCapteurs.setModel(new javax.swing.table.DefaultTableModel(
@@ -462,7 +555,7 @@ public class Interface {
 
     private void refreshListeCapteurs() {
         if (checkAirComprime2.isSelected() || checkEau2.isSelected() || checkElectricite2.isSelected() || checkTemperature2.isSelected()) {
-            String[] capteurs = connexion.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
+            String[] capteurs = database.getAllCapteursFiltres(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected());
             listeCapteurs2.setModel(new AbstractListModel<>() {
                 String[] strings = capteurs;
 
@@ -490,16 +583,11 @@ public class Interface {
         }
     }
 
-    private void displayCourbesCapteurs() {
-        //List<String> capteurs = connexion.getCapteurs(checkAirComprime2.isSelected(), checkEau2.isSelected(), checkElectricite2.isSelected(), checkTemperature2.isSelected(), textDateDebut.getText(), textDateFin.getText());
-
-    }
-
     private void displayInfosCapteur(Capteur capteur) {
         tableauInfosCapteur.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{
-                        {"Batiment", capteur.getLieu().getBatiment()},
-                        {"Etage", capteur.getLieu().getEtage()},
+                        {"Batiment", capteur.getBatiment()},
+                        {"Etage", capteur.getEtage()},
                         {"Type de fluide", capteur.getFluide().getType_fluide()},
                         {"Seuil minimum", capteur.getSeuilMin()},
                         {"Seuil maximum", capteur.getSeuilMax()}
@@ -514,7 +602,7 @@ public class Interface {
     }
 
     private void editSeuils() {
-        if(treeCapteurs.getSelectionCount() == 1 && !textSeuilMax.getText().equals("") && !textSeuilMin.getText().equals("")) {
+        if (treeCapteurs.getSelectionCount() == 1 && !textSeuilMax.getText().equals("") && !textSeuilMin.getText().equals("")) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)
                     treeCapteurs.getLastSelectedPathComponent();
 
@@ -523,10 +611,9 @@ public class Interface {
 
             Object selected = node.getUserObject();
             if (node.isLeaf()) {
-                String idCapteur = String.valueOf(selected);
-                idCapteur = idCapteur.substring(idCapteur.length() - 1);
-                connexion.updateSeuils(idCapteur, textSeuilMin.getText(), textSeuilMax.getText());
-                displayInfosCapteur(connexion.getCapteurById(idCapteur));
+                String nomCapteur = String.valueOf(selected);
+                database.updateSeuils(nomCapteur, textSeuilMin.getText(), textSeuilMax.getText());
+                displayInfosCapteur(database.getCapteurById(nomCapteur));
             }
             dialogSeuils.setVisible(false);
         }
@@ -540,20 +627,20 @@ public class Interface {
         DefaultMutableTreeNode etage = null;
         DefaultMutableTreeNode capteur = null;
 
-        String[] batiments = connexion.getAllBatiments();
+        String[] batiments = database.getAllBatiments();
         Integer[] etages;
         Capteur[] capteurs;
 
         for (String bat : batiments) {
             batiment = new DefaultMutableTreeNode(bat);
             root.add(batiment);
-            etages = connexion.getEtagesBatiment(bat);
+            etages = database.getEtagesBatiment(bat);
             for (int floor : etages) {
                 etage = new DefaultMutableTreeNode("Etage " + floor);
                 batiment.add(etage);
-                capteurs = connexion.getCapteurEtageBatiment(floor, bat);
+                capteurs = database.getCapteurEtageBatiment(floor, bat);
                 for (Capteur cpt : capteurs) {
-                    capteur = new DefaultMutableTreeNode("Capteur " + cpt.getId());
+                    capteur = new DefaultMutableTreeNode(cpt.getNomC());
                     etage.add(capteur);
                 }
             }
@@ -572,9 +659,8 @@ public class Interface {
 
                 Object selected = node.getUserObject();
                 if (node.isLeaf()) {
-                    String idCapteur = String.valueOf(selected);
-                    idCapteur = idCapteur.substring(idCapteur.length() - 1);
-                    displayInfosCapteur(connexion.getCapteurById(idCapteur));
+                    String nomCapteur = String.valueOf(selected);
+                    displayInfosCapteur(database.getCapteurById(nomCapteur));
                 }
             }
         });
