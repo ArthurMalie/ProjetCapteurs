@@ -13,6 +13,7 @@ ____________________________________________________________
     Lancer le script joint au projet “capteurs.sql”
     Votre base de données est prête
 
-2) Ouvrir le simulateur
+2) Ouvrir l’interface et commencez votre petit tour
 
-3) Ouvrir l’interface et commencez votre petit tour
+
+3) Ouvrir le simulateur
