@@ -5,18 +5,25 @@ import java.sql.SQLException;
 
 public class Capteur {
 
-    private int id;
+    private String nomC;
     private float seuilMin;
     private float seuilMax;
-    private Lieu lieu;
+    private String lieu;
+    private String batiment;
+    private int etage;
     private Fluide fluide;
 
-    public Capteur ( int id, float seuilMin, float seuilMax, Lieu lieu, Fluide fluide ) {
-        this.id = id;
+    private float valeur;
+
+    public Capteur(String nomC, float seuilMin, float seuilMax, String lieu, String batiment, int etage, Fluide fluide) {
+        this.nomC = nomC;
         this.seuilMin = seuilMin;
         this.seuilMax = seuilMax;
         this.lieu = lieu;
+        this.batiment = batiment;
+        this.etage = etage;
         this.fluide = fluide;
+        valeur = -1F;
     }
 
    /*
@@ -26,27 +33,25 @@ public class Capteur {
     */
 
 
-    public static Capteur create ( ResultSet resultSet ) {
+    public static Capteur create(ResultSet resultSet) {
         try {
-
-            int idC = resultSet.getInt("idC");
-            float seuilMin = resultSet.getFloat("seuilMin");
-            float seuilMax = resultSet.getFloat("seuilMax");
-
-            int idL = resultSet.getInt("Capteur.idL");
-            String nom = resultSet.getString("nomL");
-            String batiment = resultSet.getString("nomB");
-            int etage = resultSet.getInt("etage");
-
-            Lieu lieu = new Lieu(idL, nom, batiment, etage);
 
             String unite = resultSet.getString("unite");
             String type_fluide = resultSet.getString("Capteur.typeF");
+            float seuilMinDefaut = resultSet.getFloat("seuilMinDefaut");
+            float seuilMaxDefaut = resultSet.getFloat("seuilMaxDefaut");
 
             Fluide fluide;
-            fluide = new Fluide(unite, type_fluide);
+            fluide = new Fluide(unite, type_fluide, seuilMinDefaut, seuilMaxDefaut);
 
-            return new Capteur(idC, seuilMin, seuilMax, lieu, fluide);
+            String nomC = resultSet.getString("nomC");
+            float seuilMin = resultSet.getFloat("seuilMin");
+            float seuilMax = resultSet.getFloat("seuilMax");
+            String lieu = resultSet.getString("lieu");
+            String batiment = resultSet.getString("batiment");
+            int etage = resultSet.getInt("etage");
+
+            return new Capteur(nomC, seuilMin, seuilMax, lieu, batiment, etage, fluide);
 
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -61,43 +66,69 @@ public class Capteur {
     ____________________________
     */
 
-    public int getId () {
-        return id;
+    public String getNomC() {
+        return nomC;
     }
 
-    public void setId ( int id ) {
-        this.id = id;
+    public void setnomC(String nomC) {
+        this.nomC = nomC;
     }
 
-    public float getSeuilMin () {
+    public float getSeuilMin() {
         return seuilMin;
     }
 
-    public void setSeuilMin ( float seuilMin ) {
+    public void setSeuilMin(float seuilMin) {
         this.seuilMin = seuilMin;
     }
 
-    public float getSeuilMax () {
+    public float getSeuilMax() {
         return seuilMax;
     }
 
-    public void setSeuilMax ( float seuilMax ) {
+    public void setSeuilMax(float seuilMax) {
         this.seuilMax = seuilMax;
     }
 
-    public Lieu getLieu () {
+    public String getLieu() {
         return lieu;
     }
 
-    public void setLieu ( Lieu lieu ) {
+    public void setLieu(String lieu) {
         this.lieu = lieu;
     }
 
-    public Fluide getFluide () {
+    public String getBatiment() {
+        return batiment;
+    }
+
+    public void setBatiment(String batiment) {
+        this.batiment = batiment;
+    }
+
+    public int getEtage() {
+        return etage;
+    }
+
+    public void setEtage(int etage) {
+        this.etage = etage;
+    }
+
+    public Fluide getFluide() {
         return fluide;
     }
 
-    public void setFluide ( Fluide fluide ) {
+    public void setFluide(Fluide fluide) {
         this.fluide = fluide;
     }
+
+    public float getValeur() {
+        return valeur;
+    }
+
+    public void setValeur(float valeur) {
+        this.valeur = valeur;
+    }
+
+
 }

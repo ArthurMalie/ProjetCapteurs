@@ -1,28 +1,58 @@
 package Connexion;
 
-public class Serveur implements Runnable {
-    private static int PORT = 8952;
+import Interface.Interface;
 
-    public Serveur() {
-        //TODO création du serveur
+import java.io.*;
+import java.net.*;
+
+public class Serveur implements Runnable {
+
+    private Interface ui;
+
+    private static final int PORT = 8952;
+    Socket socket;
+    ServerSocket server;
+
+    public Serveur(Interface ui) {
+        this.ui = ui;
+
+        try {
+            server = new ServerSocket(PORT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void run() {
-        //TODO création des sockets à partir du serveur, et lancement
-    }
-
-    private class ServeurSocket implements Runnable {
-        /**
-         Chaque thread possède un numéro de capteur, pour qu'il puisse toujours s'occuper du même capteur quelque soit le message qu'il reçoit, mais c'est un peu bugué, on a des soucis quand on deoc un capteur puis qu'on le reco.
-         */
-        private int numCapteur;
-
-        public ServeurSocket(int numCapteur) {
-            this.numCapteur = numCapteur;
-        }
-
-        public void run() {
-            //TODO Récupération des messages et traitement...
+        try {
+            while (!server.isClosed()) {
+                socket = server.accept();
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            BufferedReader plec = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                            boolean socketOuvert = true;
+                            while (socketOuvert) {
+                                try {
+                                    String input = plec.readLine();
+                                    if (input != null) {
+                                        ui.newMessage(input);
+                                    }
+                                } catch (SocketException se) {
+                                    socketOuvert = false;
+                                }
+                            }
+                            socket.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                t.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

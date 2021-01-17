@@ -3,11 +3,11 @@ package Connexion;
 import Mapping.Capteur;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
+import java.time.*;
+import java.time.format.*;
+import java.util.*;
 
-public class Connexion {
+public class Database {
 
     private final String address;
     private final String username;
@@ -16,7 +16,7 @@ public class Connexion {
     private Connection connection;
     private Statement statement;
 
-    public Connexion(String address, String username, String password) {
+    public Database(String address, String username, String password) {
         this.connected = false;
         this.address = address;
         this.username = username;
@@ -117,24 +117,58 @@ public class Connexion {
     ____________________________
     */
 
-    public String[] getAllBatiments() {
-        List<String> list = new ArrayList<>();
-        ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
+    public int newCapteur(String nomC, String typeF, String batiment, String etage, String lieu) {
+        return executeUpdate("INSERT INTO CAPTEUR (NOMC, TYPEF, BATIMENT, ETAGE, LIEU, SEUILMIN, SEUILMAX) VALUES ('" +
+                nomC + "','" +
+                typeF + "','" +
+                batiment + "','" +
+                etage + "','" +
+                lieu + "','" +
+                getSeuilMin(typeF) + "','" +
+                getSeuilMax(typeF) + "') " +
+                "ON DUPLICATE KEY UPDATE NOMC = '" + nomC + "';"
+        );
+    }
+
+    public int addDonnee(String nomC, float valeur){
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        return executeUpdate("INSERT INTO DONNEE (NOMC, DATETIME, VALEUR) VALUES ('" +
+                nomC + "','" +
+                dtf.format(now) + "','" +
+                valeur + "')");
+    }
+
+    public String getSeuilMin(String typeF) {
+        ResultSet resultSet = executeQuery("SELECT SEUILMINDEFAUT FROM FLUIDE WHERE TYPEF = '" + typeF + "'");
+        float seuil = 0.0F;
         try {
-            while (resultSet.next())
-                list.add(resultSet.getString("NOMB"));
+            if (resultSet.next())
+                seuil = resultSet.getFloat("SEUILMINDEFAUT");
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return list.toArray((new String[list.size()]));
+        return String.valueOf(seuil);
     }
 
-    public String[] getAllCapteursId() {
+    public String getSeuilMax(String typeF) {
+        ResultSet resultSet = executeQuery("SELECT SEUILMAXDEFAUT FROM FLUIDE WHERE TYPEF = '" + typeF + "'");
+        float seuil = 0.0F;
+        try {
+            if (resultSet.next())
+                seuil = resultSet.getFloat("SEUILMAXDEFAUT");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return String.valueOf(seuil);
+    }
+
+    public String[] getAllBatiments() {
         List<String> list = new ArrayList<>();
-        ResultSet resultSet = executeQuery("SELECT DISTINCT NOMB FROM LIEU ORDER BY NOMB");
+        ResultSet resultSet = executeQuery("SELECT DISTINCT BATIMENT FROM CAPTEUR ORDER BY BATIMENT");
         try {
             while (resultSet.next())
-                list.add("Capteur " + resultSet.getInt("IDC"));
+                list.add(resultSet.getString("BATIMENT"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -158,7 +192,7 @@ public class Connexion {
         ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR WHERE TYPEF IN (" + fluides + ");");
         try {
             while (resultSet.next()) {
-                list.add("Capteur " + resultSet.getInt("IDC"));
+                list.add(String.valueOf(resultSet.getString("NOMC")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -166,9 +200,9 @@ public class Connexion {
         return list.toArray((new String[list.size()]));
     }
 
-    public Capteur[] getAllCapteursFiltresOnglet1(boolean airComprime, boolean eau, boolean electricite, boolean temperature, String[] batiments) {
+    public List<String> getCapteursFiltresOnglet1(boolean airComprime, boolean eau, boolean electricite, boolean temperature, String[] batiments) {
 
-        List<Capteur> list = new ArrayList<>();
+        List<String> list = new ArrayList<>();
         String fluides = "";
         if (airComprime)
             fluides += "'AIR_COMPRIME',";
@@ -187,16 +221,16 @@ public class Connexion {
         if (batimentsIn.length() > 0)
             batimentsIn = batimentsIn.substring(0, batimentsIn.length() - 1);
 
-        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,LIEU,FLUIDE WHERE CAPTEUR.IDL = LIEU.IDL AND CAPTEUR.TYPEF = FLUIDE.TYPEF AND CAPTEUR.TYPEF IN (" + fluides + ") AND CAPTEUR.IDL IN (SELECT IDL FROM LIEU WHERE NOMB IN (" + batimentsIn + "));");
+        ResultSet resultSet = executeQuery("SELECT NOMC FROM CAPTEUR WHERE TYPEF IN (" + fluides + ") AND BATIMENT IN (" + batimentsIn + ");");
         try {
             while (resultSet.next()) {
 
-                list.add(Capteur.create(resultSet));
+                list.add(resultSet.getString("NOMC"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return list.toArray((new Capteur[list.size()]));
+        return list;
 
     }
 
@@ -216,11 +250,10 @@ public class Connexion {
             fluides = fluides.substring(0, fluides.length() - 1);
 
 
-        ResultSet resultSet = executeQuery("SELECT nomB from lieu where idl in (select idL from capteur where typeF in (" + fluides + ")) ;");
+        ResultSet resultSet = executeQuery("SELECT DISTINCT BATIMENT FROM CAPTEUR WHERE TYPEF IN (" + fluides + ");");
         try {
             while (resultSet.next()) {
-
-                list.add(resultSet.getString("nomb"));
+                list.add(resultSet.getString("BATIMENT"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -233,7 +266,7 @@ public class Connexion {
 
         List<Capteur> list = new ArrayList<>();
 
-        ResultSet resultSet = executeQuery("SELECT * from capteur,lieu,fluide where capteur.idl = lieu.idl and capteur.typef = fluide.typef;");
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR, FLUIDE WHERE CAPTEUR.TYPEF = FLUIDE.TYPEF;");
         try {
             while (resultSet.next()) {
                 list.add(Capteur.create(resultSet));
@@ -248,10 +281,10 @@ public class Connexion {
     public Integer[] getEtagesBatiment(String batiment) {
         List<Integer> list = new ArrayList<>();
 
-        ResultSet resultSet = executeQuery("SELECT etage FROM lieu WHERE nomB = '" + batiment + "'");
+        ResultSet resultSet = executeQuery("SELECT DISTINCT ETAGE FROM CAPTEUR WHERE BATIMENT = '" + batiment + "'");
         try {
             while (resultSet.next()) {
-                list.add(resultSet.getInt("etage"));
+                list.add(resultSet.getInt("ETAGE"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -262,7 +295,7 @@ public class Connexion {
     public Capteur[] getCapteurEtageBatiment(int etage, String batiment) {
         List<Capteur> list = new ArrayList<>();
 
-        ResultSet resultSet = executeQuery("SELECT * from capteur,lieu,fluide where capteur.idl = lieu.idl and capteur.typef = fluide.typef and lieu.nomb = '" + batiment + "' and lieu.etage = " + etage + ";");
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,FLUIDE WHERE CAPTEUR.TYPEF = FLUIDE.TYPEF AND BATIMENT = '" + batiment + "' AND ETAGE = " + etage + ";");
         try {
             while (resultSet.next()) {
                 list.add(Capteur.create(resultSet));
@@ -277,10 +310,10 @@ public class Connexion {
     public Capteur getCapteurById(String id) {
         Capteur capteur = null;
 
-        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,LIEU,FLUIDE WHERE CAPTEUR.IDL = LIEU.IDL AND CAPTEUR.TYPEF = FLUIDE.TYPEF AND IDC = " + id);
+        ResultSet resultSet = executeQuery("SELECT * FROM CAPTEUR,FLUIDE WHERE CAPTEUR.TYPEF = FLUIDE.TYPEF AND NOMC = '" + id + "'");
 
         try {
-            if(resultSet.next()) {
+            if (resultSet.next()) {
                 capteur = Capteur.create(resultSet);
             }
         } catch (SQLException e) {
@@ -290,7 +323,7 @@ public class Connexion {
     }
 
     public int updateSeuils(String id, String seuilMin, String seuilMax) {
-        return executeUpdate("UPDATE CAPTEUR SET SEUILMIN = " + seuilMin + ", SEUILMAX = " + seuilMax + " WHERE IDC = " + id);
+        return executeUpdate("UPDATE CAPTEUR SET SEUILMIN = " + seuilMin + ", SEUILMAX = " + seuilMax + " WHERE NOMC = '" + id + "'");
     }
 
 }

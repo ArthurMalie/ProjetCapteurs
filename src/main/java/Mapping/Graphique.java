@@ -1,6 +1,6 @@
 package Mapping;
 
-import Connexion.Connexion;
+import Connexion.Database;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -18,11 +18,11 @@ import java.text.SimpleDateFormat;
 
 public class Graphique {
     private final int idC;
-    private final Connexion connection;
+    private final Database connection;
     private final String dateDebut;
     private final String dateFin;
 
-    public Graphique ( int idC, Connexion connection, String dateDebut, String dateFin ) {
+    public Graphique (int idC, Database connection, String dateDebut, String dateFin ) {
         this.idC = idC;
         this.connection = connection;
         this.dateDebut = dateDebut;
