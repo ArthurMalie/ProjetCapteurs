@@ -1,4 +1,4 @@
-package Mapping;
+package Interface;
 
 import Connexion.Database;
 import org.jfree.chart.ChartFactory;
